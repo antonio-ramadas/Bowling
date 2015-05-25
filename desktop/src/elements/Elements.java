@@ -1,4 +1,4 @@
-package com.bowling.game.Elements;
+package elements;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.graphics.g3d.Model;
