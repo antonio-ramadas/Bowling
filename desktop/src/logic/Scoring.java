@@ -4,7 +4,6 @@ public class Scoring {
 
 	private class Frame
 	{
-		int frame_number;
 		int firstChance;
 		int secondChance;
 		int thirdChance;	
@@ -18,7 +17,6 @@ public class Scoring {
 		for (int i = 1; i <= 10 ; i++ )
 		{
 			scoreChart[i] = new Frame();
-			scoreChart[i].frame_number = i;
 			scoreChart[i].firstChance = 0;
 			scoreChart[i].secondChance = 0;
 			scoreChart[i].thirdChance = 0;
