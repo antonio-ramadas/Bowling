@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
@@ -23,12 +22,10 @@ import com.badlogic.gdx.physics.bullet.collision.Collision;
 import com.badlogic.gdx.physics.bullet.collision.ContactListener;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btBroadphaseInterface;
-import com.badlogic.gdx.physics.bullet.collision.btCapsuleShape;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionConfiguration;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionDispatcher;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
-import com.badlogic.gdx.physics.bullet.collision.btConeShape;
 import com.badlogic.gdx.physics.bullet.collision.btCylinderShape;
 import com.badlogic.gdx.physics.bullet.collision.btDbvtBroadphase;
 import com.badlogic.gdx.physics.bullet.collision.btDefaultCollisionConfiguration;
@@ -49,246 +46,38 @@ import elements.Ball;
 import elements.Pin;
 
 public class GameWindow  extends ApplicationAdapter {
-	PerspectiveCamera cam;
-	CameraInputController camController;
-	Environment environment;
-	Alley bowlingAlley;
-	Ball bowlingBall;
-	Pin bowlingPin;
-	///////////////////////////////////
-	//Array<GameObject> instances;
-	//ArrayMap<String, GameObject.Constructor> constructors;
-	float spawnTimer;
-	///////
-	btCollisionConfiguration collisionConfig;
-	btDispatcher dispatcher;
-	//MyContactListener contactListener;
-	btBroadphaseInterface broadphase;
-   btDynamicsWorld dynamicsWorld;
-   btConstraintSolver constraintSolver;
-   ///////////////////////////////////
-   
-	
-	@Override
-	public void create () {
-		
-		environment = new Environment();
-		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-		environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
-		
-		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		cam.position.set(1300f, 200f, 0f);
-		cam.lookAt(0,0,0);
-		cam.near = 5f;
-		cam.far = 3000f;
-		cam.update();
-
-		bowlingAlley = new Alley();
-		bowlingAlley.create();
-
-		bowlingBall = new Ball();
-		bowlingBall.create();
-
-		bowlingPin = new Pin();
-		bowlingPin.create();
-		
-		camController = new CameraInputController(cam);
-        Gdx.input.setInputProcessor(camController);
-        
-		camController.update();
-	}
-   
-   /*@Override
-	public void create () {
-		Bullet.init();
-
-		//modelBatch = new ModelBatch();
-		bowlingAlley.create();
-		bowlingBall.create();
-		bowlingPin.create();
-		
-		environment = new Environment();
-		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-		environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
-
-		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		cam.position.set(3f, 7f, 10f);
-		cam.lookAt(0, 4f, 0);
-		cam.near = 1f;
-		cam.far = 300f;
-		cam.update();
-
-		camController = new CameraInputController(cam);
-		Gdx.input.setInputProcessor(camController);
-
-		ModelBuilder mb = new ModelBuilder();
-		mb.begin();
-		mb.node().id = "ground";
-		mb.part("ground", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.RED)))
-			.box(5f, 1f, 5f);
-		mb.node().id = "sphere";
-		mb.part("sphere", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.GREEN)))
-			.sphere(1f, 1f, 1f, 10, 10);
-		mb.node().id = "box";
-		mb.part("box", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.BLUE)))
-			.box(1f, 1f, 1f);
-		mb.node().id = "cone";
-		mb.part("cone", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.YELLOW)))
-			.cone(1f, 2f, 1f, 10);
-		mb.node().id = "capsule";
-		mb.part("capsule", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.CYAN)))
-			.capsule(0.5f, 2f, 10);
-		mb.node().id = "cylinder";
-		mb.part("cylinder", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal,
-			new Material(ColorAttribute.createDiffuse(Color.MAGENTA))).cylinder(1f, 2f, 1f, 10);
-		//model = mb.end();
-		bowlingAlley.model = mb.end();
-		bowlingBall.model = mb.end();
-		bowlingPin.model = mb.end();
-
-		constructors = new ArrayMap<String, GameObject.Constructor>(String.class, GameObject.Constructor.class);
-		constructors.put("ground", new GameObject.Constructor(model, "ground", new btBoxShape(new Vector3(2.5f, 0.5f, 2.5f)), 0f));
-		constructors.put("sphere", new GameObject.Constructor(model, "sphere", new btSphereShape(0.5f), 1f));
-		constructors.put("box", new GameObject.Constructor(model, "box", new btBoxShape(new Vector3(0.5f, 0.5f, 0.5f)), 1f));
-		constructors.put("cone", new GameObject.Constructor(model, "cone", new btConeShape(0.5f, 2f), 1f));
-		constructors.put("capsule", new GameObject.Constructor(model, "capsule", new btCapsuleShape(.5f, 1f), 1f));
-		constructors.put("cylinder", new GameObject.Constructor(model, "cylinder", new btCylinderShape(new Vector3(.5f, 1f, .5f)), 1f));
-
-     collisionConfig = new btDefaultCollisionConfiguration();
-     dispatcher = new btCollisionDispatcher(collisionConfig);
-     broadphase = new btDbvtBroadphase();
-     constraintSolver = new btSequentialImpulseConstraintSolver();
-     dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, constraintSolver, collisionConfig);
-     dynamicsWorld.setGravity(new Vector3(0, -10f, 0));
-     contactListener = new MyContactListener();
-      
-     instances = new Array<GameObject>();
-     GameObject object = constructors.get("ground").construct();
-     object.body.setCollisionFlags(object.body.getCollisionFlags()
- 			| btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
-     instances.add(object);
-     dynamicsWorld.addRigidBody(object.body);
-		object.body.setContactCallbackFlag(GROUND_FLAG);
-		object.body.setContactCallbackFilter(0);
-		object.body.setActivationState(Collision.DISABLE_DEACTIVATION);
-	}*/
-
-	@Override
-	public void render () {
-		//fundo
-		Gdx.gl.glClearColor(1, 0, 0, 1);
-		
-		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-		
-		bowlingAlley.modelBatch.begin(cam);
-		bowlingAlley.modelBatch.render(bowlingAlley.instance, environment);
-		bowlingAlley.modelBatch.end();
-
-		bowlingBall.instance.transform.setTranslation(1000, 10, 0);
-		bowlingBall.modelBatch.begin(cam);
-		bowlingBall.modelBatch.render(bowlingBall.instance, environment);
-		bowlingBall.modelBatch.end();
-		
-		bowlingPin.instance.transform.setTranslation(50, 0, 30);
-		bowlingPin.modelBatch.begin(cam);
-		bowlingPin.modelBatch.render(bowlingPin.instance, environment);
-		bowlingPin.modelBatch.end();
-	}
-	
-	
-	
-	
-	/*public void spawn () {
-		GameObject obj = constructors.values[1 + MathUtils.random(constructors.size - 2)].construct();
-		obj.transform.setFromEulerAngles(MathUtils.random(360f), MathUtils.random(360f), MathUtils.random(360f));
-		obj.transform.trn(MathUtils.random(-2.5f, 2.5f), 9f, MathUtils.random(-2.5f, 2.5f));
-		obj.body.proceedToTransform(obj.transform);
-		obj.body.setUserValue(instances.size);
-		obj.body.setCollisionFlags(obj.body.getCollisionFlags() | btCollisionObject.CollisionFlags.CF_CUSTOM_MATERIAL_CALLBACK);
-		instances.add(obj);
-		dynamicsWorld.addRigidBody(obj.body);
-		obj.body.setContactCallbackFlag(OBJECT_FLAG);
-		obj.body.setContactCallbackFilter(GROUND_FLAG);
-	}
-	
-
-	float angle, speed = 90f;
-	@Override
-	public void render () {
-		final float delta = Math.min(1f / 30f, Gdx.graphics.getDeltaTime());
-		
-		angle = (angle + delta * speed) % 360f;
-		instances.get(0).transform.setTranslation(0, MathUtils.sinDeg(angle) * 2.5f, 0f);
-
-		dynamicsWorld.stepSimulation(delta, 5, 1f/60f);
-
-		if ((spawnTimer -= delta) < 0) {
-			spawn();
-			spawnTimer = 1.5f;
-		}
-
-		camController.update();
-
-		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-		/*modelBatch.begin(cam);
-		modelBatch.render(instances, environment);
-		modelBatch.end();*/
-		/*
-		bowlingAlley.modelBatch.begin(cam);
-		bowlingAlley.modelBatch.render(bowlingAlley.instance, environment);
-		bowlingAlley.modelBatch.end();
-
-		bowlingBall.modelBatch.begin(cam);
-		bowlingBall.modelBatch.render(bowlingBall.instance, environment);
-		bowlingBall.modelBatch.end();
-		
-		bowlingPin.modelBatch.begin(cam);
-		bowlingPin.modelBatch.render(bowlingPin.instance, environment);
-		bowlingPin.modelBatch.end();
-	}
-
-	@Override
-	public void dispose () {
-		for (GameObject obj : instances)
-			obj.dispose();
-		instances.clear();
-
-		for (GameObject.Constructor ctor : constructors.values())
-			ctor.dispose();
-		constructors.clear();
-
-		dynamicsWorld.dispose();
-      constraintSolver.dispose();
-		broadphase.dispose();
-		dispatcher.dispose();
-		collisionConfig.dispose();
-
-		contactListener.dispose();
-
-		/*modelBatch.dispose();
-		model.dispose();*/
-		/*
-		bowlingAlley.dispose();
-		bowlingBall.dispose();
-		bowlingPin.dispose();
-	}
-	
-	
-	
 	final static short GROUND_FLAG = 1<<8;
 	final static short OBJECT_FLAG = 1<<9;
 	final static short ALL_FLAG = -1;
-	
+	float spawnTimer;
+	final float timeToSpawn = 3.5f;
+	int timeNumber = 0;
+	btDynamicsWorld dynamicsWorld;
+	GameObject ballGo;
+	Alley bowlingAlley;
+	CameraInputController camController;
+	Array<GameObject> instances;
+	PerspectiveCamera cam;
+	ModelBatch modelBatch;
+	Environment environment;
+	GameObject pinGo[] = new GameObject[10];
+	Boolean pinUp[] = new Boolean[10];
+	ArrayMap<String, GameObject.Constructor> constructors;
+	Model model;
+	btConstraintSolver constraintSolver;
+	btBroadphaseInterface broadphase;
+	MyContactListener contactListener;
+	btDispatcher dispatcher;
+	btCollisionConfiguration collisionConfig;
+
 	class MyContactListener extends ContactListener {
 		@Override
 		public boolean onContactAdded (int userValue0, int partId0, int index0, boolean match0, int userValue1, int partId1, int index1, boolean match1) {
-			if (match0)
+			/*if (match0)
 				((ColorAttribute)instances.get(userValue0).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);
 			if (match1)
-				((ColorAttribute)instances.get(userValue1).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);
+				((ColorAttribute)instances.get(userValue1).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);*/
+			//System.out.println("colisao");
 			return true;
 		}
 	}
@@ -304,7 +93,7 @@ public class GameWindow  extends ApplicationAdapter {
 			transform.set(worldTrans);
 		}
 	}
-	
+
 	static class GameObject extends ModelInstance implements Disposable {
 		public final btRigidBody body;
 		public final MyMotionState motionState;
@@ -351,6 +140,353 @@ public class GameWindow  extends ApplicationAdapter {
 				constructionInfo.dispose();
 			}
 		}
-	}*/
+	}
+
+	@Override
+	public void create () {
+		Bullet.init();
+
+		final float gravity = -99.8f;
+
+		Ball bowlingBall = new Ball();
+		Pin bowlingPin = new Pin();
+
+		globalInitialization(gravity);
+		elementsInit(bowlingBall, bowlingPin);
+
+		ModelBuilder mb = new ModelBuilder();		
+		modelBuilderConstructor(bowlingBall, bowlingPin, mb);
+
+		constructors = new ArrayMap<String, GameObject.Constructor>(String.class, GameObject.Constructor.class);
+		constructersConstructor();
+
+		configEnvironment();
+
+		configSpawnTime(timeToSpawn);
+	}
+
+	private void configSpawnTime(float f) {
+		spawnTimer = f;
+	}
+
+	private void configEnvironment() {
+		buildAlley();
+		ballConfig();
+		pin10set();
+	}
+
+	private void ballConfig()
+	{
+		ballGo = constructors.get("ball").construct();
+		ballGo.transform.trn(1000f, 10f, 0);
+		ballGo.body.proceedToTransform(ballGo.transform);
+		ballGo.body.setUserValue(instances.size);
+		ballGo.body.setCollisionFlags(ballGo.body.getCollisionFlags() | btCollisionObject.CollisionFlags.CF_CUSTOM_MATERIAL_CALLBACK);
+		instances.add(ballGo);
+		dynamicsWorld.addRigidBody(ballGo.body);
+		ballGo.body.setContactCallbackFlag(OBJECT_FLAG);
+		ballGo.body.setContactCallbackFilter(GROUND_FLAG);
+
+		//propriedades da bola
+		ballGo.body.setMassProps(2.72f, new Vector3(500f, 500f, 500f));
+		ballGo.body.applyCentralImpulse(new Vector3(-550f, 0f, 0f));
+		ballGo.body.setFriction(0);
+		ballGo.body.setRollingFriction(0);
+	}
+
+	private void buildAlley() {
+		// TODO Auto-generated method stub
+		GameObject object = constructors.get("ground").construct();
+		object.transform.trn(-80f, 10f, 0);
+		object.body.setCollisionFlags(object.body.getCollisionFlags()
+				| btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
+		instances.add(object);
+		dynamicsWorld.addRigidBody(object.body);
+		object.body.setContactCallbackFlag(GROUND_FLAG);
+		object.body.setContactCallbackFilter(0);
+		object.body.setActivationState(Collision.DISABLE_DEACTIVATION);
+
+		object = constructors.get("floor").construct();
+		object.transform.trn(600f, -3f, 0);
+		object.body.setCollisionFlags(object.body.getCollisionFlags()
+				| btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
+		instances.add(object);
+		dynamicsWorld.addRigidBody(object.body);
+		//object.body.setContactCallbackFlag(GROUND_FLAG);
+		object.body.setContactCallbackFilter(0);
+		object.body.setActivationState(Collision.DISABLE_DEACTIVATION);
+	}
+
+	private void setGravity(float gravity, btDynamicsWorld dynamicsWorld) {
+		// TODO Auto-generated method stub
+		dynamicsWorld.setGravity(new Vector3(0f, gravity, 0));
+	}
+
+	private void constructersConstructor() {
+		constructors.put("ground", new GameObject.Constructor(model, "ground", new btBoxShape(new Vector3(7.5f, 75f, 90f)), 0f));
+		constructors.put("floor", new GameObject.Constructor(model, "floor", new btBoxShape(new Vector3(600f, 0.5f, 50f)), 0f));
+		constructors.put("ball", new GameObject.Constructor(model, "ball", new btSphereShape(9.5f), 1f));
+
+		for (int i = 1; i <= 10; i++)
+		{
+			constructors.put("pin" + i, new GameObject.Constructor(model, "pin", new btCylinderShape(new Vector3(5f, 17f, 5f)), 1f));
+		}
+	}
+
+	private void modelBuilderConstructor(Ball bowlingBall, Pin bowlingPin,
+			ModelBuilder mb) {
+		mb.begin();
+		mb.node().id = "ground";
+		mb.part("ground", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse(Color.RED)))
+		.box(15f, 150f, 180f);
+		mb.node().id = "floor";
+		mb.part("floor", GL20.GL_TRIANGLES, Usage.Position | Usage.Normal, new Material(ColorAttribute.createDiffuse((float)0.8, (float)0.085, 0, 1)))
+		.box(1200f, 1f, 100f);
+		mb.node("pin", bowlingPin.model);
+		mb.node("ball", bowlingBall.model);
+		model = mb.end();
+	}
+
+	private void elementsInit(Ball bowlingBall,	Pin bowlingPin) {
+		// TODO Auto-generated method stub
+		bowlingAlley = new Alley();
+		bowlingAlley.create();
+
+		bowlingBall.create();
+
+		bowlingPin.create();
+	}
+
+	private void globalInitialization(float gravity) {
+		// TODO Auto-generated method stub
+		modelBatch = new ModelBatch();
+		environment = new Environment();
+		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
+		environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
+
+		setCam();
+
+		instances = new Array<GameObject>();
+		collisionConfig = new btDefaultCollisionConfiguration();
+		dispatcher = new btCollisionDispatcher(collisionConfig);
+		contactListener = new MyContactListener();
+		constraintSolver = new btSequentialImpulseConstraintSolver();
+		broadphase = new btDbvtBroadphase();
+		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, constraintSolver, collisionConfig);
+		setGravity(gravity, dynamicsWorld);
+	}
+
+	private void setCam() {
+		cam = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		cam.position.set(1300f, 100f, 0f);
+		cam.lookAt(0,0,0);
+		cam.near = 5f;
+		cam.far = 3000f;
+		cam.update();
+
+		camController = new CameraInputController(cam);
+		camController.scrollFactor = -3;
+		Gdx.input.setInputProcessor(camController);
+
+		camController.update();
+	}
+
+	private void pin10set() {
+		// TODO Auto-generated method stub
+		for (int i = 1; i <= 10; i++)
+		{
+			pinGo[i-1] = constructors.get("pin" + i).construct();
+			pinGoTrn(i);
+			pinGo[i-1].body.proceedToTransform(pinGo[i-1].transform);
+			pinGo[i-1].body.setUserValue(instances.size);
+			pinGo[i-1].body.setCollisionFlags(pinGo[i-1].body.getCollisionFlags() | btCollisionObject.CollisionFlags.CF_CUSTOM_MATERIAL_CALLBACK);
+			instances.add(pinGo[i-1]);
+			dynamicsWorld.addRigidBody(pinGo[i-1].body);
+			//pinGo[i-1].body.setContactCallbackFlag(OBJECT_FLAG);
+			pinGo[i-1].body.setContactCallbackFlag(GROUND_FLAG);
+			pinGo[i-1].body.setContactCallbackFilter(GROUND_FLAG);
+			pinGo[i-1].body.setMassProps(1.64f, new Vector3(500f, 500f, 500f));
+		}
+	}
+
+	private void pinGoTrn(int i) {
+		// TODO Auto-generated method stub
+		switch (i)
+		{
+		case 1:
+			pinGo[i-1].transform.trn(30f, 10f, -30f);
+			break;
+		case 2:
+			pinGo[i-1].transform.trn(30f, 10f, -10f);
+			break;
+		case 3:
+			pinGo[i-1].transform.trn(30f, 10f, 10f);
+			break;
+		case 4:
+			pinGo[i-1].transform.trn(30f, 10f, 30f);
+			break;
+		case 5:
+			pinGo[i-1].transform.trn(50f, 10f, -20f);
+			break;
+		case 6:
+			pinGo[i-1].transform.trn(50f, 10f, 0f);
+			break;
+		case 7:
+			pinGo[i-1].transform.trn(50f, 10f, 20f);
+			break;
+		case 8:
+			pinGo[i-1].transform.trn(70f, 10f, -10f);
+			break;
+		case 9:
+			pinGo[i-1].transform.trn(70f, 10f, 10f);
+			break;
+		case 10:
+			pinGo[i-1].transform.trn(90f, 10f, 0f);
+			break;
+		default:
+			break;
+		}
+	}
+
+	@Override
+	public void render () {
+		final float delta = Math.min(1f / 30f, Gdx.graphics.getDeltaTime());
+
+		dynamicsWorld.stepSimulation(delta, 5, 1f/60f);
+
+		if (ballGo.body.getCenterOfMassPosition().x > 50)
+		{
+			cam.position.set(ballGo.body.getCenterOfMassPosition().x + 300, 100, cam.position.z);
+			cam.update();
+		}
+
+		camController.update();
+
+		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+		if (ballGo.body.getCenterOfMassPosition().x < 15 || ballGo.body.getCenterOfMassPosition().y < -55 || ballGo.body.getCenterOfMassPosition().y > 55)
+		{
+			if ((spawnTimer -= delta) < 0)
+			{
+				timeNumber++;
+				configSpawnTime(timeToSpawn);
+				if (timeNumber >= 2)
+				{
+					timeNumber = 0;
+					restartPins();
+					newBallLaunch();
+				}
+				else
+				{
+					arePinsUp();
+					finish();
+				}
+			}
+		}
+
+		bowlingAlley.modelBatch.begin(cam);
+		bowlingAlley.modelBatch.render(bowlingAlley.instance, environment);
+		bowlingAlley.modelBatch.end();
+
+		modelBatch.begin(cam);
+		modelBatch.render(instances, environment);
+		modelBatch.end();
+	}
+
+	private void restartPins() {
+		// TODO Auto-generated method stub
+		newPinsLaunch();
+		for (int i = 1; i <= 10; i++)
+		{
+			pinUp[i-1] = true;
+		}
+	}
+
+	private void arePinsUp() {
+		// TODO Auto-generated method stub
+		for (int i = 1; i <= 10; i++)
+		{
+			pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+		}
+	}
+
+	private void finish() {
+		// TODO Auto-generated method stub
+		int index;
+		for (int i = 1; i <= 10; i++)
+		{
+			if (!pinUp[i-1])
+			{
+				index = instances.indexOf(pinGo[i-1], true);
+				if (index >= 0)
+				{
+					instances.removeIndex(index);
+					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
+					pinGo[i-1].dispose();
+				}
+				continue;
+			}
+
+			pinGo[i-1].body.clearForces();
+			pinGo[i-1].body.applyGravity();
+			pinGo[i-1].transform.trn(-pinGo[i-1].transform.M03, -pinGo[i-1].transform.M13 + 17, -pinGo[i-1].transform.M23);
+			pinGoTrn(i);
+		}
+
+		newBallLaunch();
+	}
+
+	private void newBallLaunch() {
+		// TODO Auto-generated method stub
+		instances.removeIndex(instances.indexOf(ballGo, true));
+		dynamicsWorld.removeRigidBody(ballGo.body);
+		ballGo.dispose();
+		ballConfig();
+	}
+
+	private void newPinsLaunch() {
+		// TODO Auto-generated method stub
+		int index;
+		for (int i = 1; i <= 10; i++)
+		{
+			if (pinUp[i-1])
+			{
+				index = instances.indexOf(pinGo[i-1], true);
+				if (index >= 0)
+				{
+					instances.removeIndex(index);
+					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
+					pinGo[i-1].dispose();
+				}
+			}
+		}
+		pin10set();
+	}
+
+	@Override
+	public void dispose () {
+		for (GameObject obj : instances)
+			obj.dispose();
+		instances.clear();
+
+		for (GameObject.Constructor ctor : constructors.values())
+			ctor.dispose();
+		constructors.clear();
+
+		dynamicsWorld.dispose();
+		constraintSolver.dispose();
+		broadphase.dispose();
+		dispatcher.dispose();
+		collisionConfig.dispose();
+
+		contactListener.dispose();
+
+		modelBatch.dispose();
+		model.dispose();
+	}
+
+
+
 
 }

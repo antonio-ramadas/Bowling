@@ -15,6 +15,7 @@ public class Ball extends Elements {
 		ModelLoader<?> loader = new ObjLoader();
         model = loader.loadModel(Gdx.files.internal("Ball.obj"));
         instance = new ModelInstance(model);
+		instance.transform.setTranslation(1000, 10, 0);
         
 	}
 
