@@ -18,5 +18,4 @@ public class Ball extends Elements {
 		instance.transform.setTranslation(1000, 10, 0);
         
 	}
-
 }

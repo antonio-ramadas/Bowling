@@ -1,5 +1,7 @@
 package graphics;
 
+import java.util.Random;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -50,7 +52,9 @@ public class GameWindow  extends ApplicationAdapter {
 	final static short OBJECT_FLAG = 1<<9;
 	final static short ALL_FLAG = -1;
 	float spawnTimer;
+	float timerToEnd;
 	final float timeToSpawn = 3.5f;
+	final float timeToEnd = 15f;
 	int timeNumber = 0;
 	btDynamicsWorld dynamicsWorld;
 	GameObject ballGo;
@@ -163,6 +167,7 @@ public class GameWindow  extends ApplicationAdapter {
 		configEnvironment();
 
 		configSpawnTime(timeToSpawn);
+		timerToEnd = timeToEnd;
 	}
 
 	private void configSpawnTime(float f) {
@@ -188,10 +193,66 @@ public class GameWindow  extends ApplicationAdapter {
 		ballGo.body.setContactCallbackFilter(GROUND_FLAG);
 
 		//propriedades da bola
-		ballGo.body.setMassProps(2.72f, new Vector3(500f, 500f, 500f));
-		ballGo.body.applyCentralImpulse(new Vector3(-550f, 0f, 0f));
+		releaseBall(-550f, 0f);
 		ballGo.body.setFriction(0);
 		ballGo.body.setRollingFriction(0);
+		chooseBallType(-1);
+	}
+	
+	private void chooseBallType(int i) {
+		// TODO Auto-generated method stub
+		switch (i)
+		{
+		case 0:
+			setColor(Color.BLACK);
+			setMass(2.72f);
+			break;
+		case 1:
+			setColor(Color.ORANGE);
+			setMass(1.72f);
+			break;
+		case 2:
+			setColor(Color.GREEN);
+			setMass(0.72f);
+			break;
+		case 3:
+			setColor(Color.WHITE);
+			setMass(3.72f);
+			break;
+		case 4:
+			setColor(Color.RED);
+			setMass(4.72f);
+			break;
+		case 5:
+			setColor(Color.YELLOW);
+			setMass(5.72f);
+			break;
+		default:
+		{
+			Random gerador = new Random();
+			 
+	        int numero = gerador.nextInt(5);
+	        
+	        chooseBallType(numero);
+	        
+			break;
+		}
+		}
+	}
+
+	private void setColor(Color c) {
+		// TODO Auto-generated method stub
+		((ColorAttribute)ballGo.materials.get(0).get(ColorAttribute.Diffuse)).color.set(c);
+	}
+
+	private void setMass(float fl) {
+		// TODO Auto-generated method stub
+		ballGo.body.setMassProps(fl, new Vector3(500f, 500f, 500f));
+	}
+
+	private void releaseBall(float directionFront, float directionSide)
+	{
+		ballGo.body.applyCentralImpulse(new Vector3(directionFront, 0f, directionSide));
 	}
 
 	private void buildAlley() {
@@ -365,7 +426,10 @@ public class GameWindow  extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-		if (ballGo.body.getCenterOfMassPosition().x < 15 || ballGo.body.getCenterOfMassPosition().y < -55 || ballGo.body.getCenterOfMassPosition().y > 55)
+		if (ballGo.body.getCenterOfMassPosition().x < 15
+				|| ballGo.body.getCenterOfMassPosition().y < -55
+				|| ballGo.body.getCenterOfMassPosition().y > 55
+				|| (timerToEnd -= delta) < 0)
 		{
 			if ((spawnTimer -= delta) < 0)
 			{
@@ -442,6 +506,7 @@ public class GameWindow  extends ApplicationAdapter {
 		instances.removeIndex(instances.indexOf(ballGo, true));
 		dynamicsWorld.removeRigidBody(ballGo.body);
 		ballGo.dispose();
+		timerToEnd = timeToEnd;
 		ballConfig();
 	}
 
