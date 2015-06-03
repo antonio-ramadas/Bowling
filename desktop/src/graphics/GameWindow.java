@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Random;
 
+import logic.GameMachine;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -56,12 +58,6 @@ public class GameWindow  extends ApplicationAdapter {
 	final static short GROUND_FLAG = 1<<8;
 	final static short OBJECT_FLAG = 1<<9;
 	final static short ALL_FLAG = -1;
-	float spawnTimer;
-	float timerToEnd;
-	final float timeToSpawn = 3.5f;
-	final float timeToEnd = 15f;
-	boolean launching;
-	int timeNumber = 0;
 	btDynamicsWorld dynamicsWorld;
 	GameObject ballGo;
 	Alley bowlingAlley;
@@ -79,10 +75,7 @@ public class GameWindow  extends ApplicationAdapter {
 	MyContactListener contactListener;
 	btDispatcher dispatcher;
 	btCollisionConfiguration collisionConfig;
-	Sprite QRimage;
-	SpriteBatch spriteBatch;
-	boolean initial;
-	Server gameServer;
+	GameMachine gameMachine;
 
 	class MyContactListener extends ContactListener {
 		@Override
@@ -175,32 +168,14 @@ public class GameWindow  extends ApplicationAdapter {
 		constructersConstructor();
 
 		configEnvironment();
-
-		configSpawnTime(timeToSpawn);
 		
-		try {
-			gameServer = new Server();
-			gameServer.connectPlayers(1);
-			gameServer.connectPlayers(2);
-			
-			spriteBatch = new SpriteBatch();
-			QRimage = (new QRCode(InetAddress.getLocalHost().getHostAddress(), 200, 200)).getImage();
-			initial = true;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-				
+		gameMachine = new GameMachine();
+
+		gameMachine.configSpawnTime(gameMachine.timeToSpawn);
+		
 		//releaseBall(-550f, 0f);
-	}
-
-	private void configTimerToEnd() {
-		// TODO Auto-generated method stub
-		timerToEnd = timeToEnd;
-	}
-
-	private void configSpawnTime(float f) {
-		spawnTimer = f;
+		//moveBallLeft();
+		//moveBallRight();
 	}
 
 	private void configEnvironment() {
@@ -227,6 +202,18 @@ public class GameWindow  extends ApplicationAdapter {
 		chooseBallType(-1);
 	}
 	
+	private void moveBallRight() {
+		// TODO Auto-generated method stub
+		ballGo.transform.trn(0f, 0f, -1f);
+		ballGo.body.proceedToTransform(ballGo.transform);
+	}
+
+	private void moveBallLeft() {
+		// TODO Auto-generated method stub
+		ballGo.transform.trn(0f, 10f, 1f);
+		ballGo.body.proceedToTransform(ballGo.transform);
+	}
+
 	private void chooseBallType(int i) {
 		// TODO Auto-generated method stub
 		switch (i)
@@ -280,9 +267,9 @@ public class GameWindow  extends ApplicationAdapter {
 
 	private void releaseBall(float directionFront, float directionSide)
 	{
-		launching = true;
+		gameMachine.launching = true;
 		ballGo.body.applyCentralImpulse(new Vector3(directionFront, 0f, directionSide));
-		configTimerToEnd();
+		gameMachine.configTimerToEnd();
 	}
 
 	private void buildAlley() {
@@ -456,18 +443,15 @@ public class GameWindow  extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-		if (launching && (ballGo.body.getCenterOfMassPosition().x < 15
-				|| ballGo.body.getCenterOfMassPosition().y < -55
-				|| ballGo.body.getCenterOfMassPosition().y > 55
-				|| (timerToEnd -= delta) < 0))
+		if (hasLaunchEnded(delta))
 		{
-			if ((spawnTimer -= delta) < 0)
+			if ((gameMachine.spawnTimer -= delta) < 0)
 			{
-				timeNumber++;
-				configSpawnTime(timeToSpawn);
-				if (timeNumber >= 2)
+				gameMachine.timeNumber++;
+				gameMachine.configSpawnTime(gameMachine.timeToSpawn);
+				if (gameMachine.timeNumber >= 2)
 				{
-					timeNumber = 0;
+					gameMachine.timeNumber = 0;
 					restartPins();
 					newBallLaunch();
 				}
@@ -476,7 +460,7 @@ public class GameWindow  extends ApplicationAdapter {
 					arePinsUp();
 					finish();
 				}
-				launching = false;
+				gameMachine.launching = false;
 			}
 		}
 
@@ -488,19 +472,15 @@ public class GameWindow  extends ApplicationAdapter {
 		modelBatch.render(instances, environment);
 		modelBatch.end();
 		
+		gameMachine.checkInitialConnection();
 		
-		if (gameServer.player1_isConnected && gameServer.player2_isConnected)
-		{
-			initial = false;
-		}
-		
-		if (initial)
-		{
-			spriteBatch.begin();
-			QRimage.setCenter(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
-			QRimage.draw(spriteBatch);
-			spriteBatch.end();
-		}
+	}
+
+	private boolean hasLaunchEnded(final float delta) {
+		return gameMachine.launching && (ballGo.body.getCenterOfMassPosition().x < 15
+				|| ballGo.body.getCenterOfMassPosition().y < -55
+				|| ballGo.body.getCenterOfMassPosition().y > 55
+				|| (gameMachine.timerToEnd -= delta) < 0);
 	}
 
 	private void restartPins() {
@@ -561,7 +541,7 @@ public class GameWindow  extends ApplicationAdapter {
 		instances.removeIndex(instances.indexOf(ballGo, true));
 		dynamicsWorld.removeRigidBody(ballGo.body);
 		ballGo.dispose();
-		configTimerToEnd();
+		gameMachine.configTimerToEnd();
 		ballConfig();
 	}
 
