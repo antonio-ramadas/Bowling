@@ -1,54 +1,39 @@
 package test;
 
-import graphics.QRCode;
+import static org.junit.Assert.*;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
+import org.junit.Test;
+
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-
-// Trocar a chamada á class GameWindow por esa para testar
-public class TestQRCode  extends ApplicationAdapter{
-
-	QRCode QRtest;
-	private SpriteBatch batch;
-
-	@Override
-	public void create() {
-		batch = new SpriteBatch();
-		QRtest = new QRCode("Olá eu sou um teste! É suposto esta mensagem ser lida por QRCode Reader.", 400, 400);
-		QRtest.getImage().setX(50);
-		QRtest.getImage().setY(50);
-		super.create();
+public class TestQRCode {
+	
+	/*
+	 * 	This test is only meant to establish the proper functionality of the plaintext -> QRCode classes.
+	 * 	If everything is working properly, a QRCode representing the message: 
+	 *  
+	 * 		"Olá eu sou um teste! É suposto esta mensagem ser lida por QRCode Reader." 
+	 * 
+	 * 	Should be displayed on screen for 10 seconds.
+	 * 
+	 *	This test is regardless, ALWAYS be successful.
+	 *
+     */
+	
+	@Test
+	public void test() {
+		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+		config.x = -1;
+		config.y = -1;
+		new LwjglApplication(new TestQRCodeDraw(), config);
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		assertEquals(true, true);
 	}
-	@Override
-	public void resize(int width, int height) {
-		super.resize(width, height);
-	}
-	@Override
-	public void render() {
-		super.render();
-		Gdx.gl.glClearColor(1, 1, 1, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		batch.begin();
-		QRtest.getImage().draw(batch);
-		batch.end();
-	}
-	@Override
-	public void pause() {
-		super.pause();
-	}
-	@Override
-	public void resume() {
-		super.resume();
-	}
-	@Override
-	public void dispose() {
-		super.dispose();
-	}
-
 
 }
