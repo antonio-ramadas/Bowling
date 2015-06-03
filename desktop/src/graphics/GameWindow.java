@@ -1,5 +1,7 @@
 package graphics;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.Random;
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -8,6 +10,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -43,6 +47,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ArrayMap;
 import com.badlogic.gdx.utils.Disposable;
 
+import connections.Server;
 import elements.Alley;
 import elements.Ball;
 import elements.Pin;
@@ -55,6 +60,7 @@ public class GameWindow  extends ApplicationAdapter {
 	float timerToEnd;
 	final float timeToSpawn = 3.5f;
 	final float timeToEnd = 15f;
+	boolean launching;
 	int timeNumber = 0;
 	btDynamicsWorld dynamicsWorld;
 	GameObject ballGo;
@@ -73,6 +79,10 @@ public class GameWindow  extends ApplicationAdapter {
 	MyContactListener contactListener;
 	btDispatcher dispatcher;
 	btCollisionConfiguration collisionConfig;
+	Sprite QRimage;
+	SpriteBatch spriteBatch;
+	boolean initial;
+	Server gameServer;
 
 	class MyContactListener extends ContactListener {
 		@Override
@@ -167,6 +177,25 @@ public class GameWindow  extends ApplicationAdapter {
 		configEnvironment();
 
 		configSpawnTime(timeToSpawn);
+		
+		try {
+			gameServer = new Server();
+			gameServer.connectPlayers(1);
+			gameServer.connectPlayers(2);
+			
+			spriteBatch = new SpriteBatch();
+			QRimage = (new QRCode(InetAddress.getLocalHost().getHostAddress(), 200, 200)).getImage();
+			initial = true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+				
+		//releaseBall(-550f, 0f);
+	}
+
+	private void configTimerToEnd() {
+		// TODO Auto-generated method stub
 		timerToEnd = timeToEnd;
 	}
 
@@ -193,7 +222,6 @@ public class GameWindow  extends ApplicationAdapter {
 		ballGo.body.setContactCallbackFilter(GROUND_FLAG);
 
 		//propriedades da bola
-		releaseBall(-550f, 0f);
 		ballGo.body.setFriction(0);
 		ballGo.body.setRollingFriction(0);
 		chooseBallType(-1);
@@ -252,7 +280,9 @@ public class GameWindow  extends ApplicationAdapter {
 
 	private void releaseBall(float directionFront, float directionSide)
 	{
+		launching = true;
 		ballGo.body.applyCentralImpulse(new Vector3(directionFront, 0f, directionSide));
+		configTimerToEnd();
 	}
 
 	private void buildAlley() {
@@ -426,10 +456,10 @@ public class GameWindow  extends ApplicationAdapter {
 		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-		if (ballGo.body.getCenterOfMassPosition().x < 15
+		if (launching && (ballGo.body.getCenterOfMassPosition().x < 15
 				|| ballGo.body.getCenterOfMassPosition().y < -55
 				|| ballGo.body.getCenterOfMassPosition().y > 55
-				|| (timerToEnd -= delta) < 0)
+				|| (timerToEnd -= delta) < 0))
 		{
 			if ((spawnTimer -= delta) < 0)
 			{
@@ -446,6 +476,7 @@ public class GameWindow  extends ApplicationAdapter {
 					arePinsUp();
 					finish();
 				}
+				launching = false;
 			}
 		}
 
@@ -456,6 +487,20 @@ public class GameWindow  extends ApplicationAdapter {
 		modelBatch.begin(cam);
 		modelBatch.render(instances, environment);
 		modelBatch.end();
+		
+		
+		if (gameServer.player1_isConnected && gameServer.player2_isConnected)
+		{
+			initial = false;
+		}
+		
+		if (initial)
+		{
+			spriteBatch.begin();
+			QRimage.setCenter(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
+			QRimage.draw(spriteBatch);
+			spriteBatch.end();
+		}
 	}
 
 	private void restartPins() {
@@ -469,9 +514,19 @@ public class GameWindow  extends ApplicationAdapter {
 
 	private void arePinsUp() {
 		// TODO Auto-generated method stub
+		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
 			pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+			isStrike = isStrike || pinUp[i-1];
+		}
+		
+		if (!isStrike)
+		{
+			for (int i = 1; i <= 10; i++)
+			{
+				pinUp[i-1] = true;
+			}
 		}
 	}
 
@@ -506,7 +561,7 @@ public class GameWindow  extends ApplicationAdapter {
 		instances.removeIndex(instances.indexOf(ballGo, true));
 		dynamicsWorld.removeRigidBody(ballGo.body);
 		ballGo.dispose();
-		timerToEnd = timeToEnd;
+		configTimerToEnd();
 		ballConfig();
 	}
 
