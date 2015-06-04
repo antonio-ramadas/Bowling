@@ -10,7 +10,6 @@ public class Player {
 		name = n;
 		scores = new Scoring();
 	}
-	
 
 	public String getName()
 	{
@@ -20,8 +19,8 @@ public class Player {
 		name = n;
 	}
 	
-	public void makePlay(int pinsDown){
-		scores.makePlay(pinsDown);
+	public boolean makePlay(int pinsDown){
+		return scores.makePlay(pinsDown);
 	}
 	public Scoring getScoreBoard(){
 		return scores;

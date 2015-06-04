@@ -168,11 +168,17 @@ public class GameWindow  extends ApplicationAdapter {
 		constructersConstructor();
 
 		configEnvironment();
-		
-		gameMachine = new GameMachine();
+
+		try {
+			gameMachine = new GameMachine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		gameMachine.configSpawnTime(gameMachine.timeToSpawn);
-		
+		restartPins();
+
 		//releaseBall(-550f, 0f);
 		//moveBallLeft();
 		//moveBallRight();
@@ -201,7 +207,7 @@ public class GameWindow  extends ApplicationAdapter {
 		ballGo.body.setRollingFriction(0);
 		chooseBallType(-1);
 	}
-	
+
 	private void moveBallRight() {
 		// TODO Auto-generated method stub
 		ballGo.transform.trn(0f, 0f, -1f);
@@ -245,11 +251,11 @@ public class GameWindow  extends ApplicationAdapter {
 		default:
 		{
 			Random gerador = new Random();
-			 
-	        int numero = gerador.nextInt(5);
-	        
-	        chooseBallType(numero);
-	        
+
+			int numero = gerador.nextInt(5);
+
+			chooseBallType(numero);
+
 			break;
 		}
 		}
@@ -442,28 +448,7 @@ public class GameWindow  extends ApplicationAdapter {
 
 		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-		if (hasLaunchEnded(delta))
-		{
-			if ((gameMachine.spawnTimer -= delta) < 0)
-			{
-				gameMachine.timeNumber++;
-				gameMachine.configSpawnTime(gameMachine.timeToSpawn);
-				if (gameMachine.timeNumber >= 2)
-				{
-					gameMachine.timeNumber = 0;
-					restartPins();
-					newBallLaunch();
-				}
-				else
-				{
-					arePinsUp();
-					finish();
-				}
-				gameMachine.launching = false;
-			}
-		}
-
+		
 		bowlingAlley.modelBatch.begin(cam);
 		bowlingAlley.modelBatch.render(bowlingAlley.instance, environment);
 		bowlingAlley.modelBatch.end();
@@ -471,9 +456,64 @@ public class GameWindow  extends ApplicationAdapter {
 		modelBatch.begin(cam);
 		modelBatch.render(instances, environment);
 		modelBatch.end();
-		
-		gameMachine.checkInitialConnection();
-		
+
+		try {
+			if (gameMachine.initial && !(gameMachine.checkInitialConnection(delta)))
+			{
+				//ligaram
+			}
+			else
+			{
+				if (hasLaunchEnded(delta))
+				{
+					if ((gameMachine.spawnTimer -= delta) < 0)
+					{
+						gameMachine.configTimerToEnd();
+						gameMachine.configSpawnTime(gameMachine.timeToSpawn);
+						gameMachine.launching = false;
+					}
+				}
+
+				//gameMachine.launching = true;
+
+				if (gameMachine.launching == false)
+				{
+					if (gameMachine.isPlayer1Turn)
+					{
+						if (gameMachine.player1.makePlay(gameMachine.numberPinsDown(pinUp)))
+						{
+							gameMachine.newPlay();
+							restartPins();
+							newBallLaunch();
+						}
+						else
+						{
+							gameMachine.isPlayer1Turn = false;
+							arePinsUp();
+							finish();
+						}
+					}
+					else
+					{
+						if (gameMachine.player2.makePlay(gameMachine.numberPinsDown(pinUp)))
+						{
+							gameMachine.newPlay();
+							restartPins();
+							newBallLaunch();
+						}
+						else
+						{
+							gameMachine.isPlayer1Turn = true;
+							arePinsUp();
+							finish();
+						}
+					}
+				}
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private boolean hasLaunchEnded(final float delta) {
@@ -500,13 +540,14 @@ public class GameWindow  extends ApplicationAdapter {
 			pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
 			isStrike = isStrike || pinUp[i-1];
 		}
-		
+
 		if (!isStrike)
 		{
 			for (int i = 1; i <= 10; i++)
 			{
 				pinUp[i-1] = true;
 			}
+			gameMachine.newPlay();
 		}
 	}
 
@@ -550,7 +591,7 @@ public class GameWindow  extends ApplicationAdapter {
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
-			if (pinUp[i-1])
+			if (pinUp[i-1] != null && pinUp[i-1])
 			{
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
