@@ -27,6 +27,8 @@ public class Client {
 
 	private String EXTERNAL_IP;
 	private final int IP_PORT = 34567; 
+	
+	private boolean send = true;
 
 	
 	public Client(String s)
@@ -79,11 +81,21 @@ public class Client {
 
 	public void sendMessageServer(String event, float value)
 	{
+		while (!send);
+		
 		if (isConnected == true)
 		{
+			send = false;
 			outputToServer.println(event);
 			outputToServer.println(Float.toString(value));	
+			
+			long startTime = System.currentTimeMillis();
+			long elapsed = System.currentTimeMillis() - startTime;
+			while (elapsed < 500)
+				elapsed = System.currentTimeMillis() - startTime;
+			send = true;
 		}
+
 	}
 	
 	private class connectServerThread implements Runnable

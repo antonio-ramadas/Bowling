@@ -120,7 +120,6 @@ public class GameMachine {
 
 	private void setNameOfPlayer(int i) throws InterruptedException {
 		// TODO Auto-generated method stub
-		gameServer.startListeningPlayers(i);
 		waitPlayer(i);
 		
 		System.out.println(i);

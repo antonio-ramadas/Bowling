@@ -19,6 +19,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldStyle;
 
 import connections.Client;
+import connections.DataPacket;
 
 public class AndroidBowlingGame implements ApplicationListener, InputProcessor, GestureListener  {
 
@@ -28,15 +29,16 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	// 2 - Before Connecting / QR Prompt
 	// 3 - Attempting Connection
 	// 4 - Wait for other Players
-	// 5 - Waiting for your turn
+	// 5 - Waiting for your turn --- We had a change of design ideas but don't want to delete it.
 	// 6 - Play or Scores
 	// 7 - Ball Selection and Strafing
 	// 8 - Playing the Ball
-	// 9 - Wait Resolution, jump back to 5 
+	// 9 - Wait Resolution, jump back to 6 
 
 
 	public String ServerIP = "Unknown";
 	private Client playerClient;
+	DataPacket data;
 
 	private SpriteBatch batch;
 	private BitmapFont font;
@@ -44,7 +46,10 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private String textmessages;
 
 	private String PlayerName = "";
-	private int PlayerNumber;
+	private int PlayerNumber = 0;
+	private String OtherPlayerName = "";
+	private int MyScore = 0;
+	private int OtherPlayerScore = 0;
 
 	private TextField inputPlayerName;
 	TextFieldStyle style;
@@ -62,15 +67,19 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	Sprite PlaySprite;
 	Texture ScoreText;
 	Sprite  ScoreButton;
+	String OtherScores = "";
+	private boolean receivingScores = false;
 
 	int motionState = 0;
 	float finalrollvalue = 0;	
 	long startTime;
 	long elapsedtime;
-	
+
 	public interface Callback {		public void startScannerActivity();}
 	public void setMyGameCallback(Callback callback) {callbackInterface = callback;}
 	Callback callbackInterface;
+
+
 
 	public void create() {
 		batch = new SpriteBatch();
@@ -110,7 +119,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		if (Gamestate == 6)
 		{
 			ScoreButton.draw(batch);
-			PlaySprite.draw(batch);
+			//PlaySprite.draw(batch);
+			if (receivingScores)
+			{
+				font.draw(batch, OtherScores, width/2 + width/4, 3*height/4);		
+			}
 		}
 		if (Gamestate == 7)
 		{
@@ -182,47 +195,106 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 		Gamestate = 3;
 
-		/*
+
 		(new Thread() {
 			public void run() {
 				while(playerClient.isConnected == false)
 					;
 				PlayerNumber = playerClient.playerNumber;
 				playerClient.startListeningPlayers();
+
+
 				stateAwaitingPlayers();
 			}
 		}
-		).start();
-		 */
+				).start();
 
-		//....
-		stateAwaitingPlayers();
+
 
 	}
 	public void stateAwaitingPlayers()
 	{
-		textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber) +  " but waiting for the other player.";
+		textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber) +  " Timer: 15" ;
 		Gamestate = 4;
 
-		//....
-		stateAwaitingTurns();
+		(new Thread() {
+			boolean stop = false;
+
+			public void run() {
+				while (!stop)
+				{
+					while (!playerClient.readReady)
+						;
+					data = playerClient.getLatestData();
+					if(data.Value == 0)
+						stop = true;
+					else
+						textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber) +  "Timer:" + Integer.toString( (int) data.Value);
+
+				}
+				stateWaitingTurn();
+
+			}
+		}
+				).start();
+
+		playerClient.sendMessageServer("Name", 1);
+		playerClient.sendMessageServer(PlayerName, 1);
+
 	}
-	public void stateAwaitingTurns()
+	public void stateORIGINALAwaitingTurns()
 	{
 		textmessages = PlayerName + ": Now you're just waiting for your turn to come";
 		Gamestate = 5;
 
 		//....
-		stateChoosingtoPlay();
+		stateWaitingTurn();
 	}
-	public void stateChoosingtoPlay()
+	public void stateWaitingTurn()
 	{
 		textmessages = "You should be able to pick to make a play, or to request your scores";
-		PlaySprite = new Sprite(PlayText);
-		PlaySprite.setX(width/2 - PlaySprite.getWidth()/2);PlaySprite.setY(height/2);
+		/*PlaySprite = new Sprite(PlayText);
+		PlaySprite.setX(width/2 - PlaySprite.getWidth()/2);PlaySprite.setY(height/2);*/
 		ScoreButton = new Sprite(ScoreText);
 		ScoreButton.setX(width/2 - ScoreButton.getWidth()/2);ScoreButton.setY(height/2 - ScoreButton.getHeight() - 10);
 
+
+		(new Thread() {
+			boolean stop = false;
+
+			public void run() {
+				while (!stop)
+				{
+					while (!playerClient.readReady)
+						;
+					data = playerClient.getLatestData();
+					if(data.Event == "NomeOutroJogador")
+					{
+						while (!playerClient.readReady)
+							;
+						data = playerClient.getLatestData();
+						OtherPlayerName = data.Event;
+					} 
+					else if (data.Event == "Pontuacao")
+					{
+						MyScore = (int) data.Value;
+					} 
+					else if (data.Event == "PontuacaoOutro")
+					{
+						OtherPlayerScore = (int) data.Value;
+					} 
+					else if (data.Event == "Turno")
+					{
+						stop = true;
+					}
+
+
+				}
+				stateGameOptions();
+
+			}
+		}
+				).start();
 
 		Gamestate = 6;
 	}
@@ -249,23 +321,25 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		textmessages = "Touch anywhere on the screen, hold and SWING!";
 		motionState = 0;
 		Gamestate = 8;
-		
-		
+
+
 		(new Thread() {
 			public void run() {
 				boolean pointingdown = false;
 				boolean goingupwards = false;
 				float pitch;
-				
+
 				while(motionState != 3)
 				{
+					pitch = Gdx.input.getPitch();
+					
 					if (motionState == 0)
 					{
 						pointingdown = false;
 						goingupwards = false;
-					}
+					} 
+
 					
-					pitch = Gdx.input.getPitch();
 					if (pitch > 70 && pointingdown == false && goingupwards == false)
 					{
 						pointingdown = true;
@@ -288,19 +362,44 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 						elapsedtime = System.currentTimeMillis() - startTime;
 						motionState = 3;
 					}
-					
-					
+
+
 				}
 			}
 		}
-		).start();
-		
-		
+				).start();
+
+
 
 	}
 	public void stateAwaitingResults()
 	{
 		textmessages = "The Ball is moving, please wait...";
+
+
+		(new Thread() {
+			boolean stop = false;
+
+			public void run() {
+				while (!stop)
+				{
+					while (!playerClient.readReady)
+						;
+					data = playerClient.getLatestData();
+					if (data.Event == "JogadaCompleta")
+					{
+						stop = true;
+					}
+
+
+				}
+				stateWaitingTurn();
+
+			}
+		}
+				).start();
+
+
 		Gamestate = 9;
 	}
 
@@ -338,6 +437,12 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			Gdx.input.setOnscreenKeyboardVisible(true);
 			return true;
 		}
+		if (Gamestate == 1 && screenX < 100 && screenY < 100)
+		{
+			PlayerName = "Default";
+			stateQRPrompt();
+			return true;
+		}		
 		if (Gamestate == 2 && screenX > QRbuttonSprite.getX() && screenX <  QRbuttonSprite.getX()+QRbuttonSprite.getWidth() 
 				&& screenY < (height - QRbuttonSprite.getY()) 
 				&& screenY > (height- (QRbuttonSprite.getY()+QRbuttonSprite.getHeight()))
@@ -348,21 +453,25 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		}
 		if (Gamestate == 6)
 		{
-			if (screenX > PlaySprite.getX() && screenX <  PlaySprite.getX()+PlaySprite.getWidth() 
+			/*if (screenX > PlaySprite.getX() && screenX <  PlaySprite.getX()+PlaySprite.getWidth() 
 					&& screenY < (height - PlaySprite.getY()) 
 					&& screenY > (height- (PlaySprite.getY()+PlaySprite.getHeight()))
 					)
 			{
 				stateGameOptions();
 				return true;
-			}
+			}*/
 
 			if (screenX > ScoreButton.getX() && screenX <  ScoreButton.getX()+ScoreButton.getWidth() 
 					&& screenY < (height - ScoreButton.getY()) 
 					&& screenY > (height- (ScoreButton.getY()+ScoreButton.getHeight()))
 					)
-			{
-				textmessages = "Asked the server to show the score table";
+			{			
+				playerClient.sendMessageServer("Pontuacao", 1);
+
+				receivingScores = true;
+				textmessages = PlayerName + "Score: " + Integer.toString(MyScore);
+				OtherScores = OtherPlayerName + "Score: " + Integer.toString(OtherPlayerScore);
 
 				return true;
 			}
@@ -375,7 +484,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					)
 			{
 
-				textmessages = "Told to move left";
+				playerClient.sendMessageServer("Move", 0);
 				return true;
 			}
 
@@ -385,7 +494,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					)
 			{
 
-				textmessages = "Told to move right";
+				playerClient.sendMessageServer("Move", 1);
 				return true;
 			}
 
@@ -443,7 +552,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 				break;
 			}
 			BallSprite.setTexture(BallText);
-			textmessages = "ball chaned to " + Integer.toString(Ballchoice);
+			playerClient.sendMessageServer("BallChange", Ballchoice);
 
 			return true;
 		}
@@ -460,14 +569,21 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			}
 			if (motionState == 3)
 			{
-				textmessages = "Sending force";
+				playerClient.sendMessageServer("BallForce", elapsedtime);
+				playerClient.sendMessageServer("BallRoll", finalrollvalue);
 				stateAwaitingResults();
 			}
 			return true;
 		}
 		return false;
 	}
-
+	
+	
+	public boolean longPress(float x, float y) 
+	{
+			
+		return false;
+	}
 	public void resize(int width, int height) {		
 	}
 	public void pause() {
@@ -492,9 +608,6 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		return false;
 	}
 	public boolean tap(float x, float y, int count, int button) {
-		return false;
-	}
-	public boolean longPress(float x, float y) {
 		return false;
 	}
 	public boolean pan(float x, float y, float deltaX, float deltaY) {

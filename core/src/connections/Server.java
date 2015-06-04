@@ -142,6 +142,8 @@ public class Server {
 				outputToPlayer1.println(Integer.toString(1));
 
 				player1_isConnected = true;
+				
+				startListeningPlayers(1);
 
 			} catch (IOException e) {e.printStackTrace();}
 		}
@@ -161,6 +163,8 @@ public class Server {
 				outputToPlayer2.println(Integer.toString(2));
 
 				player2_isConnected = true;
+				
+				startListeningPlayers(2);
 
 
 			} catch (IOException e) {e.printStackTrace();}
@@ -182,18 +186,6 @@ public class Server {
 						Data1.setData(messagePlayer1, valuePlayer1);
 
 						readPlayer1 = true;
-
-						//Controlled
-						/*
-							 String input = inputFromPlayer2.readLine();
-
-							if (input.matches("IMPLEMENTSOMETHING"))
-							{
-								while(!inputFromPlayer2.ready() && player2_isConnected)
-									;
-								valuePlayer2 = Float.parseFloat(inputFromPlayer2.readLine());
-							} 
-						 */
 					}
 				}	catch (NumberFormatException e) {e.printStackTrace();} 
 				catch (IOException e) {e.printStackTrace();}
