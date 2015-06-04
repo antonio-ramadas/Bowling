@@ -1,9 +1,11 @@
 package logic;
 
+import graphics.GameWindow;
 import graphics.QRCode;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -28,9 +30,12 @@ public class GameMachine {
 	private float connectionTime;
 	public boolean is2Players;
 	public boolean isPlayer1Turn;
+	public boolean restartPins;
+	public int ballType;
 
 	private int numberPinsDown;
 	private boolean connectedPlayer1;
+	public boolean gameIsOver;
 
 	public GameMachine () throws IOException
 	{
@@ -39,6 +44,7 @@ public class GameMachine {
 		connectionTime = 15f;
 		newPlay();
 		connectedPlayer1 = false;
+		gameIsOver = false;
 
 		try {
 			gameServer = new Server();
@@ -82,7 +88,7 @@ public class GameMachine {
 				float temp = connectionTime - delta;
 
 				gameServer.sendMessagePlayer(1, "TIME", temp);
-				
+
 				if (gameServer.player2_isConnected)
 				{
 					initial = false;
@@ -121,7 +127,7 @@ public class GameMachine {
 	private void setNameOfPlayer(int i) throws InterruptedException {
 		// TODO Auto-generated method stub
 		waitPlayer(i);
-		
+
 		System.out.println(i);
 
 		DataPacket d = gameServer.getLatestDataPlayers(i);
@@ -179,6 +185,135 @@ public class GameMachine {
 
 		numberPinsDown = count - numberPinsDown;
 
+		restartPins = (count == 10);
+
 		return numberPinsDown;
 	}
+
+
+	public void notifyPlayer(Boolean[] pin) {
+		// TODO Auto-generated method stub
+		if (isPlayer1Turn)
+		{
+			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
+			gameServer.sendMessagePlayer(1, "JogadaCompleta", 1);
+		}
+		else
+		{
+			isPlayer1Turn = !player2.makePlay(numberPinsDown(pin));
+			if (is2Players)
+			{
+				gameServer.sendMessagePlayer(2, "JogadaCompleta", 1);
+				gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
+			}
+		}
+	}
+
+	public void getPlayerPlay(GameWindow gameWindow, boolean b) {
+
+		class ThreadBetter implements Runnable{
+			private GameWindow gw;
+			boolean b1;
+
+			boolean stop = false;
+			float Force = 0;
+			float Roll = 0;
+
+			public ThreadBetter(GameWindow g, boolean bb)
+			{
+				gw = g;
+				b1 = bb;
+			}
+
+			@Override
+			public void run() {
+				while (!stop)
+				{
+					DataPacket data;
+					if (b1 && gameServer.readPlayer1)
+					{
+
+						data = gameServer.getLatestDataPlayers(1);
+						if (data.Event.matches("BallChange"))
+						{
+							ballType = (int) data.Value;
+						} else if (data.Event.matches("Move"))
+						{
+							if ((int) data.Value == 0)
+							{
+								gw.moveBallLeft();
+							} else
+							{
+								gw.moveBallRight();
+							}
+						} else if (data.Event.matches("BallForce"))
+						{
+							Force = -data.Value;
+						} else if (data.Event.matches("BallRoll"))
+						{
+							Roll = -data.Value;
+							gw.chooseBallType(ballType);
+							gw.releaseBall(Force, Roll);
+							stop = true;
+						}
+
+					}
+				}
+			}
+			
+			
+		}
+
+		Thread threading = new Thread( new ThreadBetter(gameWindow, b));
+		threading.start();
+
+	}
+
+	public void computerPlay(GameWindow gameWindow) {
+		// TODO Auto-generated method stub
+		gameWindow.chooseBallType(-1);
+		Random rnd = new Random();
+		int move = rnd.nextInt(30);
+		
+		if (rnd.nextInt(2) == 0)
+		{
+			gameWindow.moveBallLeft(move);
+		}
+		else
+		{
+			gameWindow.moveBallRight(move);
+			move = -move;
+		}
+		
+		if (move < 0)
+		{
+			move = rnd.nextInt(30);
+		}
+		else
+		{
+			move = -rnd.nextInt(30);
+		}
+		
+		gameWindow.releaseBall(-(rnd.nextInt(500) + 500), move);
+	}
+
+	public void sendPoints(boolean b) {
+		if (b)
+		{
+			gameServer.sendMessagePlayer(1, "NomeOutroJogador", 1);
+			gameServer.sendMessagePlayer(1, player2.getName(), 1);
+			gameServer.sendMessagePlayer(1, "Pontuacao", player1.getScoreBoard().getTotalScore());
+			gameServer.sendMessagePlayer(1, "PontuacaoOutro", player2.getScoreBoard().getTotalScore());
+		}
+		else 
+		{
+			gameServer.sendMessagePlayer(2, "NomeOutroJogador", 1);
+			gameServer.sendMessagePlayer(2, player1.getName(), 1);
+			gameServer.sendMessagePlayer(2, "Pontuacao", player2.getScoreBoard().getTotalScore());
+			gameServer.sendMessagePlayer(2, "PontuacaoOutro", player1.getScoreBoard().getTotalScore());
+
+		}
+	}
+
+
 }

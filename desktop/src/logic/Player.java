@@ -20,7 +20,11 @@ public class Player {
 	}
 	
 	public boolean makePlay(int pinsDown){
-		return scores.makePlay(pinsDown);
+		scores.makePlay(pinsDown);
+		int jogada = scores.getNextPlay();
+		if (jogada % 2 != 0 && jogada != 21)
+			return false;
+		return true;
 	}
 	public Scoring getScoreBoard(){
 		return scores;

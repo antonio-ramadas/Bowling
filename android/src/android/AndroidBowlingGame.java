@@ -268,22 +268,22 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					while (!playerClient.readReady)
 						;
 					data = playerClient.getLatestData();
-					if(data.Event == "NomeOutroJogador")
+					if(data.Event.matches("NomeOutroJogador"))
 					{
 						while (!playerClient.readReady)
 							;
 						data = playerClient.getLatestData();
 						OtherPlayerName = data.Event;
 					} 
-					else if (data.Event == "Pontuacao")
+					else if (data.Event.matches("Pontuacao"))
 					{
 						MyScore = (int) data.Value;
 					} 
-					else if (data.Event == "PontuacaoOutro")
+					else if (data.Event.matches("PontuacaoOutro"))
 					{
 						OtherPlayerScore = (int) data.Value;
 					} 
-					else if (data.Event == "Turno")
+					else if (data.Event.matches("Turno"))
 					{
 						stop = true;
 					}
@@ -386,7 +386,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					while (!playerClient.readReady)
 						;
 					data = playerClient.getLatestData();
-					if (data.Event == "JogadaCompleta")
+					if (data.Event.matches("JogadaCompleta"))
 					{
 						stop = true;
 					}

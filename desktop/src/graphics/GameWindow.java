@@ -205,48 +205,67 @@ public class GameWindow  extends ApplicationAdapter {
 		//propriedades da bola
 		ballGo.body.setFriction(0);
 		ballGo.body.setRollingFriction(0);
-		chooseBallType(-1);
 	}
 
-	private void moveBallRight() {
+	public void moveBallRight() {
 		// TODO Auto-generated method stub
-		ballGo.transform.trn(0f, 0f, -1f);
-		ballGo.body.proceedToTransform(ballGo.transform);
+		if (ballGo.body.getCenterOfMassPosition().y > -45)
+		{
+			ballGo.transform.trn(0f, 0f, -1f);
+			ballGo.body.proceedToTransform(ballGo.transform);
+		}
 	}
 
-	private void moveBallLeft() {
+	public void moveBallLeft() {
 		// TODO Auto-generated method stub
-		ballGo.transform.trn(0f, 10f, 1f);
-		ballGo.body.proceedToTransform(ballGo.transform);
+		if (ballGo.body.getCenterOfMassPosition().y < 45)
+		{
+			ballGo.transform.trn(0f, 0f, 1f);
+			ballGo.body.proceedToTransform(ballGo.transform);
+		}
 	}
 
-	private void chooseBallType(int i) {
+	public void moveBallRight(float i) {
+		// TODO Auto-generated method stub
+		if (ballGo.body.getCenterOfMassPosition().y - i > -45)
+		{
+			ballGo.transform.trn(0f, 0f, -i);
+			ballGo.body.proceedToTransform(ballGo.transform);
+		}
+	}
+
+	public void moveBallLeft(float i) {
+		// TODO Auto-generated method stub
+		if (ballGo.body.getCenterOfMassPosition().y + i < 45)
+		{
+			ballGo.transform.trn(0f, 0f, i);
+			ballGo.body.proceedToTransform(ballGo.transform);
+		}
+	}
+
+	public void chooseBallType(int i) {
 		// TODO Auto-generated method stub
 		switch (i)
 		{
 		case 0:
-			setColor(Color.BLACK);
+			setColor(Color.WHITE);
 			setMass(2.72f);
 			break;
 		case 1:
 			setColor(Color.ORANGE);
-			setMass(1.72f);
+			setMass(3.72f);
 			break;
 		case 2:
 			setColor(Color.GREEN);
-			setMass(0.72f);
-			break;
-		case 3:
-			setColor(Color.WHITE);
-			setMass(3.72f);
-			break;
-		case 4:
-			setColor(Color.RED);
 			setMass(4.72f);
 			break;
-		case 5:
+		case 3:
 			setColor(Color.YELLOW);
-			setMass(5.72f);
+			setMass(6f);
+			break;
+		case 4:
+			setColor(Color.BLACK);
+			setMass(7.26f);
 			break;
 		default:
 		{
@@ -271,7 +290,7 @@ public class GameWindow  extends ApplicationAdapter {
 		ballGo.body.setMassProps(fl, new Vector3(500f, 500f, 500f));
 	}
 
-	private void releaseBall(float directionFront, float directionSide)
+	public void releaseBall(float directionFront, float directionSide)
 	{
 		gameMachine.launching = true;
 		ballGo.body.applyCentralImpulse(new Vector3(directionFront, 0f, directionSide));
@@ -448,7 +467,7 @@ public class GameWindow  extends ApplicationAdapter {
 
 		Gdx.gl.glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-		
+
 		bowlingAlley.modelBatch.begin(cam);
 		bowlingAlley.modelBatch.render(bowlingAlley.instance, environment);
 		bowlingAlley.modelBatch.end();
@@ -457,56 +476,79 @@ public class GameWindow  extends ApplicationAdapter {
 		modelBatch.render(instances, environment);
 		modelBatch.end();
 
+		boolean temp_play = gameMachine.isPlayer1Turn;
+
 		try {
-			if (gameMachine.initial && !(gameMachine.checkInitialConnection(delta)))
+			if (gameMachine.gameIsOver == false)
 			{
-				//ligaram
-			}
-			else
-			{
-				if (hasLaunchEnded(delta))
+				if (gameMachine.initial && !(gameMachine.checkInitialConnection(delta))) //inicial
 				{
-					if ((gameMachine.spawnTimer -= delta) < 0)
-					{
-						gameMachine.configTimerToEnd();
-						gameMachine.configSpawnTime(gameMachine.timeToSpawn);
-						gameMachine.launching = false;
-					}
+					//ligaram
 				}
-
-				//gameMachine.launching = true;
-
-				if (gameMachine.launching == false)
+				else
 				{
-					if (gameMachine.isPlayer1Turn)
+					if (hasLaunchEnded(delta))
 					{
-						if (gameMachine.player1.makePlay(gameMachine.numberPinsDown(pinUp)))
+						if ((gameMachine.spawnTimer -= delta) < 0)
 						{
-							gameMachine.newPlay();
-							restartPins();
-							newBallLaunch();
-						}
-						else
-						{
-							gameMachine.isPlayer1Turn = false;
-							arePinsUp();
-							finish();
+							gameMachine.configTimerToEnd();
+							gameMachine.configSpawnTime(gameMachine.timeToSpawn);
+							gameMachine.launching = false;
+							gameMachine.notifyPlayer(pinUp);						
 						}
 					}
-					else
+
+					if (gameMachine.launching == false && gameMachine.gameIsOver == false)
 					{
-						if (gameMachine.player2.makePlay(gameMachine.numberPinsDown(pinUp)))
+						if (gameMachine.isPlayer1Turn)
 						{
-							gameMachine.newPlay();
-							restartPins();
-							newBallLaunch();
+							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
+							{
+								gameMachine.newPlay();
+								restartPins();
+								newBallLaunch();
+							}
+							else
+							{
+								arePinsUp();
+								finish();
+							}
+							System.out.println("aqui");
+							gameMachine.gameServer.sendMessagePlayer(1, "Turno", 1);
+							System.out.println("aqui passou");
+							gameMachine.getPlayerPlay(this, true);
+							if (gameMachine.is2Players)
+							{
+								gameMachine.sendPoints(false);
+							}
+							System.out.println("aqui passou passou");
 						}
 						else
 						{
-							gameMachine.isPlayer1Turn = true;
-							arePinsUp();
-							finish();
-						}
+							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
+							{
+								gameMachine.newPlay();
+								restartPins();
+								newBallLaunch();
+							}
+							else
+							{
+								arePinsUp();
+								finish();
+							}
+
+							gameMachine.gameServer.sendMessagePlayer(2, "Turno", 1);
+							gameMachine.sendPoints(true);
+							if (gameMachine.is2Players)
+							{
+								gameMachine.getPlayerPlay(this, false);
+							}
+							else
+							{
+								gameMachine.computerPlay(this);
+							}
+						}	
+						gameMachine.launching = true;
 					}
 				}
 			}
@@ -520,6 +562,7 @@ public class GameWindow  extends ApplicationAdapter {
 		return gameMachine.launching && (ballGo.body.getCenterOfMassPosition().x < 15
 				|| ballGo.body.getCenterOfMassPosition().y < -55
 				|| ballGo.body.getCenterOfMassPosition().y > 55
+				|| ballGo.body.getCenterOfMassPosition().z < -10
 				|| (gameMachine.timerToEnd -= delta) < 0);
 	}
 
