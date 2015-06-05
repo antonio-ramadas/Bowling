@@ -17,8 +17,8 @@ import connections.*;
 public class GameMachine {
 	public float spawnTimer;
 	public float timerToEnd;
-	public final float timeToSpawn = 3.5f;
-	public final float timeToEnd = 15f;
+	public final float timeToSpawn = 6f;
+	public final float timeToEnd = 30f;
 	public boolean launching;
 	public boolean initial;
 	public Server gameServer;
@@ -36,6 +36,7 @@ public class GameMachine {
 	private int numberPinsDown;
 	private boolean connectedPlayer1;
 	public boolean gameIsOver;
+	public boolean waitingPlayer;
 
 	public GameMachine () throws IOException
 	{
@@ -45,6 +46,7 @@ public class GameMachine {
 		newPlay();
 		connectedPlayer1 = false;
 		gameIsOver = false;
+		waitingPlayer = false;
 
 		try {
 			gameServer = new Server();
@@ -86,6 +88,7 @@ public class GameMachine {
 			if (initial)
 			{
 				float temp = connectionTime - delta;
+				//temp = -1;
 
 				gameServer.sendMessagePlayer(1, "TIME", temp);
 
@@ -237,6 +240,7 @@ public class GameMachine {
 						if (data.Event.matches("BallChange"))
 						{
 							ballType = (int) data.Value;
+							gw.chooseBallType(ballType-1);
 						} else if (data.Event.matches("Move"))
 						{
 							if ((int) data.Value == 0)
@@ -252,9 +256,11 @@ public class GameMachine {
 						} else if (data.Event.matches("BallRoll"))
 						{
 							Roll = -data.Value;
-							gw.chooseBallType(ballType);
 							gw.releaseBall(Force, Roll);
+							System.out.println("Ball type: " + ballType + " Force: " + Force + " Roll: " + Roll);
 							stop = true;
+							launching = true;
+							waitingPlayer = false;
 						}
 
 					}
@@ -294,7 +300,9 @@ public class GameMachine {
 			move = -rnd.nextInt(30);
 		}
 		
-		gameWindow.releaseBall(-(rnd.nextInt(500) + 500), move);
+		int numero = -(rnd.nextInt(1000) + 1000);
+		gameWindow.releaseBall(numero, move);
+		System.out.println("Computador: " + numero);
 	}
 
 	public void sendPoints(boolean b) {

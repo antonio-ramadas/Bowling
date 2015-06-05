@@ -177,7 +177,32 @@ public class GameWindow  extends ApplicationAdapter {
 		}
 
 		gameMachine.configSpawnTime(gameMachine.timeToSpawn);
-		restartPins();
+		//restartPins();
+
+		/*ImagePontuation p = new ImagePontuation();
+		p.writePlayersName("Manel", "Pedro");
+		p.writeScoreHalfPlay(1, 1, 1, "2");
+		p.writeScoreHalfPlay(1, 1, 2, "/");
+		p.writeScorePlay(1, 1, "3");
+
+		p.writeScoreHalfPlay(1, 2, 1, "X");
+		p.writeScoreHalfPlay(1, 2, 2, "9");
+		p.writeScorePlay(1, 2, "3");
+
+
+		p.writeScoreHalfPlay(2, 1, 1, "2");
+		p.writeScoreHalfPlay(2, 1, 2, "/");
+		p.writeScorePlay(2, 1, "3");
+
+		p.writeScoreHalfPlay(2, 2, 1, "X");
+		p.writeScoreHalfPlay(2, 2, 2, "9");
+		p.writeScorePlay(2, 2, "3");
+
+		p.writeFinalScore(254, 5);
+
+		p.exportImage();
+
+		System.exit(0);*/
 
 		//releaseBall(-550f, 0f);
 		//moveBallLeft();
@@ -187,7 +212,7 @@ public class GameWindow  extends ApplicationAdapter {
 	private void configEnvironment() {
 		buildAlley();
 		ballConfig();
-		pin10set();
+		//pin10set();
 	}
 
 	private void ballConfig()
@@ -205,11 +230,13 @@ public class GameWindow  extends ApplicationAdapter {
 		//propriedades da bola
 		ballGo.body.setFriction(0);
 		ballGo.body.setRollingFriction(0);
+		chooseBallType(0);
 	}
 
 	public void moveBallRight() {
 		// TODO Auto-generated method stub
-		if (ballGo.body.getCenterOfMassPosition().y > -45)
+		System.out.println("ballGo.body.getCenterOfMassPosition().z = " + ballGo.body.getCenterOfMassPosition().z);
+		if (ballGo.body.getCenterOfMassPosition().z > -35)
 		{
 			ballGo.transform.trn(0f, 0f, -1f);
 			ballGo.body.proceedToTransform(ballGo.transform);
@@ -218,7 +245,8 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void moveBallLeft() {
 		// TODO Auto-generated method stub
-		if (ballGo.body.getCenterOfMassPosition().y < 45)
+		System.out.println("ballGo.body.getCenterOfMassPosition().z = " + ballGo.body.getCenterOfMassPosition().z);
+		if (ballGo.body.getCenterOfMassPosition().z < 35)
 		{
 			ballGo.transform.trn(0f, 0f, 1f);
 			ballGo.body.proceedToTransform(ballGo.transform);
@@ -227,7 +255,7 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void moveBallRight(float i) {
 		// TODO Auto-generated method stub
-		if (ballGo.body.getCenterOfMassPosition().y - i > -45)
+		if (ballGo.body.getCenterOfMassPosition().z - i > -35)
 		{
 			ballGo.transform.trn(0f, 0f, -i);
 			ballGo.body.proceedToTransform(ballGo.transform);
@@ -236,7 +264,7 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void moveBallLeft(float i) {
 		// TODO Auto-generated method stub
-		if (ballGo.body.getCenterOfMassPosition().y + i < 45)
+		if (ballGo.body.getCenterOfMassPosition().z + i < 35)
 		{
 			ballGo.transform.trn(0f, 0f, i);
 			ballGo.body.proceedToTransform(ballGo.transform);
@@ -462,6 +490,8 @@ public class GameWindow  extends ApplicationAdapter {
 			cam.position.set(ballGo.body.getCenterOfMassPosition().x + 300, 100, cam.position.z);
 			cam.update();
 		}
+		//cam.position.set(300, 100, cam.position.z);
+		//cam.update();
 
 		camController.update();
 
@@ -500,57 +530,86 @@ public class GameWindow  extends ApplicationAdapter {
 
 					if (gameMachine.launching == false && gameMachine.gameIsOver == false)
 					{
-						if (gameMachine.isPlayer1Turn)
+						if (gameMachine.isPlayer1Turn && !gameMachine.waitingPlayer)
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
+								countPinsUp();
+								gameMachine.numberPinsDown(pinUp);
+								System.out.println("True !");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
+								countPinsUp();
+								gameMachine.numberPinsDown(pinUp);
+								System.out.println("False !");
 								arePinsUp();
+								System.out.println("----------------");
 								finish();
+								System.out.println("Mas Passou!");
 							}
-							System.out.println("aqui");
-							gameMachine.gameServer.sendMessagePlayer(1, "Turno", 1);
-							System.out.println("aqui passou");
-							gameMachine.getPlayerPlay(this, true);
-							if (gameMachine.is2Players)
+							
+							if (gameMachine.waitingPlayer == false)
 							{
-								gameMachine.sendPoints(false);
+								gameMachine.waitingPlayer = true;
+								gameMachine.gameServer.sendMessagePlayer(1, "Turno", 1);
+								gameMachine.getPlayerPlay(this, true);
+
+								if (gameMachine.is2Players)
+								{
+									gameMachine.sendPoints(false);
+								}
 							}
-							System.out.println("aqui passou passou");
 						}
-						else
+						else if (!gameMachine.waitingPlayer)
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
+								countPinsUp();
+								gameMachine.numberPinsDown(pinUp);
+								System.out.println("Maquina -> True");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
+								countPinsUp();
+								gameMachine.numberPinsDown(pinUp);
+								System.out.println("Maquina -> False");
 								arePinsUp();
 								finish();
 							}
 
-							gameMachine.gameServer.sendMessagePlayer(2, "Turno", 1);
-							gameMachine.sendPoints(true);
-							if (gameMachine.is2Players)
+							if (gameMachine.waitingPlayer == false)
 							{
-								gameMachine.getPlayerPlay(this, false);
+								gameMachine.waitingPlayer = true;
+								gameMachine.gameServer.sendMessagePlayer(2, "Turno", 1);
+								gameMachine.sendPoints(true);
+								if (gameMachine.is2Players)
+								{
+									gameMachine.getPlayerPlay(this, false);
+								}
+								else
+								{
+									gameMachine.computerPlay(this);	
+									gameMachine.launching = true;
+									gameMachine.waitingPlayer = false;
+								}
 							}
-							else
-							{
-								gameMachine.computerPlay(this);
-							}
-						}	
-						gameMachine.launching = true;
+						}
+						gameMachine.configTimerToEnd();
+						gameMachine.configSpawnTime(gameMachine.timeToSpawn);
 					}
 				}
+			}
+			else //jogo acabou
+			{
+				System.out.println("Acabou o jogo!!!!");
+				System.exit(0);
 			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -562,7 +621,7 @@ public class GameWindow  extends ApplicationAdapter {
 		return gameMachine.launching && (ballGo.body.getCenterOfMassPosition().x < 15
 				|| ballGo.body.getCenterOfMassPosition().y < -55
 				|| ballGo.body.getCenterOfMassPosition().y > 55
-				|| ballGo.body.getCenterOfMassPosition().z < -10
+				|| ballGo.body.getCenterOfMassPosition().z < -20
 				|| (gameMachine.timerToEnd -= delta) < 0);
 	}
 
@@ -580,7 +639,12 @@ public class GameWindow  extends ApplicationAdapter {
 		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
-			pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+			pinUp[i-1] = false;
+			if (pinGo[i-1] != null)
+			{
+				System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition());
+				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+			}
 			isStrike = isStrike || pinUp[i-1];
 		}
 
@@ -591,6 +655,18 @@ public class GameWindow  extends ApplicationAdapter {
 				pinUp[i-1] = true;
 			}
 			gameMachine.newPlay();
+		}
+	}
+	
+	private void countPinsUp()
+	{
+		for (int i = 1; i <= 10; i++)
+		{
+			pinUp[i-1] = false;
+			if (pinGo[i-1] != null)
+			{
+				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+			}
 		}
 	}
 
