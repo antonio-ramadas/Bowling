@@ -199,14 +199,14 @@ public class GameMachine {
 		if (isPlayer1Turn)
 		{
 			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
-			gameServer.sendMessagePlayer(1, "JogadaCompleta", 1);
+			gameServer.sendMessagePlayer(1, "jogou", 15);
 		}
 		else
 		{
 			isPlayer1Turn = !player2.makePlay(numberPinsDown(pin));
 			if (is2Players)
 			{
-				gameServer.sendMessagePlayer(2, "JogadaCompleta", 1);
+				gameServer.sendMessagePlayer(2, "jogou", 15);
 				gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
 			}
 		}
@@ -214,6 +214,7 @@ public class GameMachine {
 
 	public void getPlayerPlay(GameWindow gameWindow, boolean b) {
 
+		System.out.println("Entrou no getPlayerPlay!!!!");
 		class ThreadBetter implements Runnable{
 			private GameWindow gw;
 			boolean b1;
@@ -232,29 +233,46 @@ public class GameMachine {
 			public void run() {
 				while (!stop)
 				{
+					//System.out.println(b1 + " " + gameServer.readPlayer1);
 					DataPacket data;
-					if (b1 && gameServer.readPlayer1)
+					//System.out.println("entrou...");
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					data = gameServer.getLatestDataPlayers(1);
+					if (data == null)
 					{
-						data = gameServer.getLatestDataPlayers(1);
-						if (data.Event.matches("BallChange"))
+						continue;
+					}
+					//System.out.println("    |  e passou!");
+					String s = new String(data.Event);
+					float v = data.Value;
+					if (b1)
+					{
+						System.out.println("s = " + s + " | v = " + v);
+						if (s.matches("BallChange"))
 						{
-							ballType = (int) data.Value;
+							ballType = (int) v;
 							gw.chooseBallType(ballType-1);
-						} else if (data.Event.matches("Move"))
+						} else if (s.matches("Move"))
 						{
-							if ((int) data.Value == 0)
+							System.out.println("->>>>>>>" + v);
+							if ((int) v == 0)
 							{
 								gw.moveBallLeft();
 							} else
 							{
 								gw.moveBallRight();
 							}
-						} else if (data.Event.matches("BallForce"))
+						} else if (s.matches("BallForce"))
 						{
-							Force = -data.Value;
-						} else if (data.Event.matches("BallRoll"))
+							Force = -v;
+						} else if (s.matches("BallRoll"))
 						{
-							Roll = -data.Value;
+							Roll = -v;
 							gw.releaseBall(Force, Roll);
 							System.out.println("Ball type: " + ballType + " Force: " + Force + " Roll: " + Roll);
 							stop = true;

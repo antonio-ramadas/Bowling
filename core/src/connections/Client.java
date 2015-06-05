@@ -91,7 +91,7 @@ public class Client {
 			
 			long startTime = System.currentTimeMillis();
 			long elapsed = System.currentTimeMillis() - startTime;
-			while (elapsed < 200)
+			while (elapsed < 1)
 				elapsed = System.currentTimeMillis() - startTime;
 			send = true;
 		}

@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -42,7 +41,6 @@ public class Server {
 	public Server() throws IOException
 	{
 		serverSocket = new ServerSocket(IP_PORT);
-		System.out.println("Servidor aberto em: " + InetAddress.getLocalHost().getHostAddress());
 	}
 
 	public Boolean connectPlayers(int PlayerNumber) throws IOException
@@ -83,15 +81,15 @@ public class Server {
 	public DataPacket getLatestDataPlayers(int PlayerNumber){
 		if(PlayerNumber == 1 && readPlayer1)
 		{
-			DataPacket temp = new DataPacket(Data1.Event,Data1.Value);
+			DataPacket temp = new DataPacket(Data1.Event, Data1.Value);
 			readPlayer1 = false;
 			return temp;
 		}
 		if(PlayerNumber == 2 && readPlayer2)
 		{
-			DataPacket temp = new DataPacket(Data2.Event,Data2.Value);
+			DataPacket temp = new DataPacket(Data2.Event, Data2.Value);
 			readPlayer2 = false;
-			return Data2;
+			return temp;
 		}
 		
 		return null;
@@ -115,20 +113,22 @@ public class Server {
 		return false;
 
 	}
-	
+
 	public void sendMessagePlayer(int PlayerNumber, String event, float value)
 	{
-		System.out.println("A enviar (" + event + "|" + value  + ") Jogador " + PlayerNumber);
+		System.out.print("Jogador " + PlayerNumber + " vai mandar mensagem: " + event + " | " + value);
 		if (PlayerNumber == 1 && player1_isConnected == true)
 		{
 			outputToPlayer1.println(event);
-			outputToPlayer1.println(Float.toString(value));			
+			outputToPlayer1.println(Float.toString(value));	
 		}
 		if (PlayerNumber == 2 && player2_isConnected == true)
-		{			
+		{
 			outputToPlayer2.println(event);
 			outputToPlayer2.println(Float.toString(value));	
 		}
+		
+		System.out.println(" -> Mandou");
 	}
 
 
@@ -137,9 +137,8 @@ public class Server {
 		public void run() {
 
 			try {
-				System.out.println("Waiting for Player 1 to connect");
 				clientSocket[0] = serverSocket.accept();
-				System.out.println("Player 1 connected");
+
 				inputFromPlayer1 = new BufferedReader(new InputStreamReader(clientSocket[0].getInputStream()));
 				outputToPlayer1 = new PrintStream(clientSocket[0].getOutputStream());
 
@@ -190,7 +189,7 @@ public class Server {
 							;
 						valuePlayer1 = Float.parseFloat(inputFromPlayer1.readLine());
 						Data1.setData(messagePlayer1, valuePlayer1);
-						System.out.println("Recebeu (" + messagePlayer1 + "|" + valuePlayer1  + ") Jogador 1");
+						System.out.print("Jogador " + 1 + " recebeu mensagem: " + messagePlayer1 + " | " + valuePlayer1);
 
 						readPlayer1 = true;
 					}
@@ -214,8 +213,9 @@ public class Server {
 						while(!inputFromPlayer2.ready())
 							;
 						valuePlayer2 = Float.parseFloat(inputFromPlayer2.readLine());
+
 						Data2.setData(messagePlayer2, valuePlayer2);
-						System.out.println("Recebeu (" + messagePlayer2 + "|" + valuePlayer2  + ") Jogador 1");
+						System.out.print("Jogador " + 2 + " recebeu mensagem: " + messagePlayer2 + " | " + valuePlayer2);
 
 						readPlayer2 = true;
 

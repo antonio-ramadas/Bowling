@@ -647,12 +647,14 @@ public class GameWindow  extends ApplicationAdapter {
 			pinUp[i-1] = false;
 			if (pinGo[i-1] != null)
 			{
-				System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition());
-				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 5);
+				System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition() + " -> " + !(pinGo[i-1].body.getCenterOfMassPosition().y < 5));
+				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
 			}
 			isStrike = isStrike || pinUp[i-1];
 		}
 
+		gameMachine.restartPins = false;
+		
 		if (!isStrike)
 		{
 			for (int i = 1; i <= 10; i++)
@@ -660,18 +662,7 @@ public class GameWindow  extends ApplicationAdapter {
 				pinUp[i-1] = true;
 			}
 			gameMachine.newPlay();
-		}
-	}
-	
-	private void countPinsUp()
-	{
-		for (int i = 1; i <= 10; i++)
-		{
-			pinUp[i-1] = false;
-			if (pinGo[i-1] != null)
-			{
-				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
-			}
+			gameMachine.restartPins = true;
 		}
 	}
 
@@ -696,6 +687,11 @@ public class GameWindow  extends ApplicationAdapter {
 			pinGo[i-1].body.applyGravity();
 			pinGo[i-1].transform.trn(-pinGo[i-1].transform.M03, -pinGo[i-1].transform.M13 + 17, -pinGo[i-1].transform.M23);
 			pinGoTrn(i);
+		}
+		
+		if (gameMachine.restartPins)
+		{
+			pin10set();
 		}
 
 		newBallLaunch();
