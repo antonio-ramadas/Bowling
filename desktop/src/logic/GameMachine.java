@@ -235,7 +235,6 @@ public class GameMachine {
 					DataPacket data;
 					if (b1 && gameServer.readPlayer1)
 					{
-
 						data = gameServer.getLatestDataPlayers(1);
 						if (data.Event.matches("BallChange"))
 						{

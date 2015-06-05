@@ -8,6 +8,7 @@ import logic.GameMachine;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -76,6 +77,13 @@ public class GameWindow  extends ApplicationAdapter {
 	btDispatcher dispatcher;
 	btCollisionConfiguration collisionConfig;
 	GameMachine gameMachine;
+	
+	class HelloThread extends Thread {
+		 public void run() {
+			 Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/Pin Fall.mp3"));
+			 sound.play(1.0f);
+		    }
+	}
 
 	class MyContactListener extends ContactListener {
 		@Override
@@ -84,7 +92,9 @@ public class GameWindow  extends ApplicationAdapter {
 				((ColorAttribute)instances.get(userValue0).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);
 			if (match1)
 				((ColorAttribute)instances.get(userValue1).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);*/
-			//System.out.println("colisao");
+			
+			new HelloThread().start();
+			
 			return true;
 		}
 	}
@@ -273,6 +283,7 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void chooseBallType(int i) {
 		// TODO Auto-generated method stub
+		System.out.println("Ball Type: " + i);
 		switch (i)
 		{
 		case 0:
@@ -280,15 +291,15 @@ public class GameWindow  extends ApplicationAdapter {
 			setMass(2.72f);
 			break;
 		case 1:
-			setColor(Color.ORANGE);
+			setColor(Color.BLUE);
 			setMass(3.72f);
 			break;
 		case 2:
-			setColor(Color.GREEN);
+			setColor(Color.ORANGE);
 			setMass(4.72f);
 			break;
 		case 3:
-			setColor(Color.YELLOW);
+			setColor(Color.PURPLE);
 			setMass(6f);
 			break;
 		case 4:
@@ -333,7 +344,7 @@ public class GameWindow  extends ApplicationAdapter {
 				| btCollisionObject.CollisionFlags.CF_KINEMATIC_OBJECT);
 		instances.add(object);
 		dynamicsWorld.addRigidBody(object.body);
-		object.body.setContactCallbackFlag(GROUND_FLAG);
+		//object.body.setContactCallbackFlag(GROUND_FLAG);
 		object.body.setContactCallbackFilter(0);
 		object.body.setActivationState(Collision.DISABLE_DEACTIVATION);
 
@@ -435,8 +446,10 @@ public class GameWindow  extends ApplicationAdapter {
 			dynamicsWorld.addRigidBody(pinGo[i-1].body);
 			//pinGo[i-1].body.setContactCallbackFlag(OBJECT_FLAG);
 			pinGo[i-1].body.setContactCallbackFlag(GROUND_FLAG);
-			pinGo[i-1].body.setContactCallbackFilter(GROUND_FLAG);
+			pinGo[i-1].body.setContactCallbackFilter(OBJECT_FLAG);
 			pinGo[i-1].body.setMassProps(1.64f, new Vector3(500f, 500f, 500f));
+
+			System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition());
 		}
 	}
 
@@ -524,7 +537,7 @@ public class GameWindow  extends ApplicationAdapter {
 							gameMachine.configTimerToEnd();
 							gameMachine.configSpawnTime(gameMachine.timeToSpawn);
 							gameMachine.launching = false;
-							gameMachine.notifyPlayer(pinUp);						
+							gameMachine.notifyPlayer(pinUp);				
 						}
 					}
 
@@ -534,8 +547,6 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								countPinsUp();
-								gameMachine.numberPinsDown(pinUp);
 								System.out.println("True !");
 								gameMachine.newPlay();
 								restartPins();
@@ -543,8 +554,6 @@ public class GameWindow  extends ApplicationAdapter {
 							}
 							else
 							{
-								countPinsUp();
-								gameMachine.numberPinsDown(pinUp);
 								System.out.println("False !");
 								arePinsUp();
 								System.out.println("----------------");
@@ -566,19 +575,15 @@ public class GameWindow  extends ApplicationAdapter {
 						}
 						else if (!gameMachine.waitingPlayer)
 						{
+							System.out.println("Maquina2 -> True");
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								countPinsUp();
-								gameMachine.numberPinsDown(pinUp);
-								System.out.println("Maquina -> True");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								countPinsUp();
-								gameMachine.numberPinsDown(pinUp);
 								System.out.println("Maquina -> False");
 								arePinsUp();
 								finish();
@@ -643,7 +648,7 @@ public class GameWindow  extends ApplicationAdapter {
 			if (pinGo[i-1] != null)
 			{
 				System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition());
-				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 12);
+				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 5);
 			}
 			isStrike = isStrike || pinUp[i-1];
 		}
