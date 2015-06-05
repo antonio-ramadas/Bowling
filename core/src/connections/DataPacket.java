@@ -3,19 +3,17 @@ package connections;
 public class DataPacket {
 	public String Event;
 	public float Value;
-	
+
 	public DataPacket()
 	{
 		
 	}
-
 	public DataPacket(String event2, float value2) {
-		// TODO Auto-generated constructor stub
-		setData(event2, value2);
+		setData(event2,value2);
 	}
 
 	public void setData(String s, float f)
 	{
-		Event = s; Value = f;
+		Event = new String(s); Value = f;
 	}
 }

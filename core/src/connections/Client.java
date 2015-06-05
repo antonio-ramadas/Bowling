@@ -61,8 +61,9 @@ public class Client {
 	public DataPacket getLatestData(){
 		if (readReady)
 		{
+			DataPacket temp = Data;
 			readReady = false;
-			return Data;
+			return temp;
 		}
 		return null;
 	}
@@ -91,7 +92,7 @@ public class Client {
 			
 			long startTime = System.currentTimeMillis();
 			long elapsed = System.currentTimeMillis() - startTime;
-			while (elapsed < 1)
+			while (elapsed < 200)
 				elapsed = System.currentTimeMillis() - startTime;
 			send = true;
 		}
@@ -141,7 +142,7 @@ public class Client {
 					if (inputFromServer.ready() && !readReady)
 					{
 						
-						messageServer = inputFromServer.readLine();
+						messageServer = new String(inputFromServer.readLine());
 						while(!inputFromServer.ready())
 							;
 						valueServer = Float.parseFloat(inputFromServer.readLine());
