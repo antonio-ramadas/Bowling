@@ -80,7 +80,8 @@ public class GameWindow  extends ApplicationAdapter {
 
 	class HelloThread extends Thread {
 		public void run() {
-			Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/Pin Fall.mp3"));
+			Random r = new Random();
+			Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/pin" + (r.nextInt(3) + 1) +".mp3"));
 			sound.play(1.0f);
 		}
 	}

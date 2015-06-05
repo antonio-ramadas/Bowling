@@ -38,7 +38,7 @@ public class GameMachine {
 	private boolean connectedPlayer1;
 	public boolean gameIsOver;
 	public boolean waitingPlayer;
-	ImagePontuation image;
+	public ImagePontuation image;
 
 	public GameMachine () throws IOException
 	{
@@ -227,8 +227,8 @@ public class GameMachine {
 			if (is2Players)
 			{
 				gameServer.sendMessagePlayer(2, "jogou", 15);
-				gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
 			}
+			gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
 			System.out.println("---------------------------------------");
 			System.out.println("player 2 turn: " + !isPlayer1Turn);
 			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
