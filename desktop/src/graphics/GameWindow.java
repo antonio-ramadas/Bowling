@@ -769,7 +769,4 @@ public class GameWindow  extends ApplicationAdapter {
 		model.dispose();
 	}
 
-
-
-
 }

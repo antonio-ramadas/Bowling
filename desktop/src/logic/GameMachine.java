@@ -1,6 +1,7 @@
 package logic;
 
 import graphics.GameWindow;
+import graphics.ImagePontuation;
 import graphics.QRCode;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ public class GameMachine {
 	private boolean connectedPlayer1;
 	public boolean gameIsOver;
 	public boolean waitingPlayer;
+	ImagePontuation image;
 
 	public GameMachine () throws IOException
 	{
@@ -47,6 +49,8 @@ public class GameMachine {
 		connectedPlayer1 = false;
 		gameIsOver = false;
 		waitingPlayer = false;
+
+		image = new ImagePontuation();
 
 		try {
 			gameServer = new Server();
@@ -102,6 +106,7 @@ public class GameMachine {
 					setNameOfPlayer(2);
 					gameServer.sendMessagePlayer(1, "TIME", 0);
 					gameServer.sendMessagePlayer(2, "TIME", 0);
+					image.writePlayersName(player1.getName(), player2.getName());
 				}				
 				else if ((connectionTime = temp) < 0)
 				{
@@ -112,6 +117,7 @@ public class GameMachine {
 					ret = true;
 					player2.setName("Computador");
 					gameServer.sendMessagePlayer(1, "TIME", 0);
+					image.writePlayersName(player1.getName(), player2.getName());
 				}
 			}
 		}
@@ -192,7 +198,7 @@ public class GameMachine {
 
 		System.out.println("count = " + count);
 		System.out.println("numberPinsDown = " + numberPinsDown);
-		
+
 		if (restartPins)
 		{
 			isPlayer1Turn = !isPlayer1Turn;
@@ -227,7 +233,77 @@ public class GameMachine {
 			System.out.println("player 2 turn: " + !isPlayer1Turn);
 			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
 			System.out.println("---------------------------------------");
+
+			if (isPlayer1Turn)
+			{
+				if (gameIsOver)
+				{
+					writeToImageFinal();
+				}
+				else
+				{
+					writeToImage();
+					image.exportImage();
+				}
+			}
 		}
+	}
+
+	private void writeToImageFinal() {
+		// TODO Auto-generated method stub
+		int play = player1.getScoreBoard().latestScoredFrame();
+		image.writeScoreHalfPlay(1, play, 1, firstSquare(player1.getScoreBoard().getPinsFelled(2*play-1)));
+		image.writeScoreHalfPlay(1, play, 2, firstSquare(player1.getScoreBoard().getPinsFelled(2*play)));
+		image.writeScoreHalfPlay(1, play, 3, firstSquare(player1.getScoreBoard().getPinsFelled(2*play+1)));
+
+		image.writeScoreHalfPlay(2, play, 1, firstSquare(player2.getScoreBoard().getPinsFelled(2*play-1)));
+		image.writeScoreHalfPlay(2, play, 2, firstSquare(player2.getScoreBoard().getPinsFelled(2*play)));
+		image.writeScoreHalfPlay(2, play, 3, firstSquare(player2.getScoreBoard().getPinsFelled(2*play+1)));
+		
+		for (int i = 1; i <= 10; i++)
+		{
+			image.writeScorePlay(1, i, Integer.toString(player1.getScoreBoard().getScoreFrame(i)));
+			image.writeScorePlay(2, i, Integer.toString(player2.getScoreBoard().getScoreFrame(i)));
+		}
+		
+		image.writeFinalScore(player1.getScoreBoard().getTotalScore(), player2.getScoreBoard().getTotalScore());
+		
+		image.exportImage();
+	}
+	
+	private String secondSquare(int first, int second)
+	{
+		if (first == 10)
+		{
+			return "";
+		}
+		
+		if (first + second == 10)
+		{
+			return "/";
+		}
+		
+		return Integer.toString(second);
+	}
+	
+	private String firstSquare(int first)
+	{
+		if (first == 10)
+		{
+			return "X";
+		}
+		
+		return Integer.toString(first);
+	}
+
+	private void writeToImage() {
+		// TODO Auto-generated method stub
+		int play = player1.getScoreBoard().latestScoredFrame();
+		image.writeScoreHalfPlay(1, play, 1, firstSquare(player1.getScoreBoard().getPinsFelled(2*play-1)));
+		image.writeScoreHalfPlay(1, play, 2, secondSquare(player1.getScoreBoard().getPinsFelled(2*play-1), player1.getScoreBoard().getPinsFelled(2*play)));
+
+		image.writeScoreHalfPlay(2, play, 1, firstSquare(player2.getScoreBoard().getPinsFelled(2*play-1)));
+		image.writeScoreHalfPlay(2, play, 2, secondSquare(player2.getScoreBoard().getPinsFelled(2*play-1), player2.getScoreBoard().getPinsFelled(2*play)));
 	}
 
 	public void getPlayerPlay(GameWindow gameWindow, boolean b) {

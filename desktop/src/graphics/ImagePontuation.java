@@ -72,12 +72,17 @@ public class ImagePontuation {
 		for (int i = 1; i < play; i++)
 		{
 			x += 25;
-			x += 50;
+			x += 47;
 		}
 		
 		if (turn == 2)
 		{
 			x += 25;
+		}
+		
+		if (turn == 3)
+		{
+			x += 50;
 		}
 		
 		if (points.equals("/"))
