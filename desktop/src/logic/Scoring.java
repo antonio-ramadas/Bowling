@@ -123,7 +123,7 @@ public class Scoring {
 	public int getScoreFrame(int frameNumber)
 	{
 		if (frameNumber > 10 || frameNumber < 0 || frameNumber > latestScoredFrame())
-			return -1;
+			return 0;
 
 		int score = 0;
 
