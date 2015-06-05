@@ -135,7 +135,7 @@ public class GameMachine {
 
 		DataPacket d = gameServer.getLatestDataPlayers(i);
 		System.out.println(i + " " + d.Event);
-		if (d.Event.matches("Name"))
+		if (d.Event.equals("Name"))
 		{
 			waitPlayer(i);
 			d = gameServer.getLatestDataPlayers(i);
@@ -190,6 +190,16 @@ public class GameMachine {
 
 		restartPins = (count == 10);
 
+		System.out.println("count = " + count);
+		System.out.println("numberPinsDown = " + numberPinsDown);
+		
+		if (restartPins)
+		{
+			isPlayer1Turn = !isPlayer1Turn;
+			launching = false;
+			waitingPlayer = false;
+		}
+
 		return numberPinsDown;
 	}
 
@@ -199,6 +209,10 @@ public class GameMachine {
 		if (isPlayer1Turn)
 		{
 			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
+			System.out.println("---------------------------------------");
+			System.out.println("player 1 turn: " + isPlayer1Turn);
+			System.out.println("player 1 score: " + player1.getScoreBoard().getTotalScore());
+			System.out.println("---------------------------------------");
 			gameServer.sendMessagePlayer(1, "jogou", 15);
 		}
 		else
@@ -209,6 +223,10 @@ public class GameMachine {
 				gameServer.sendMessagePlayer(2, "jogou", 15);
 				gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
 			}
+			System.out.println("---------------------------------------");
+			System.out.println("player 2 turn: " + !isPlayer1Turn);
+			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
+			System.out.println("---------------------------------------");
 		}
 	}
 
@@ -242,7 +260,14 @@ public class GameMachine {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					data = gameServer.getLatestDataPlayers(1);
+					if (b1)
+					{
+						data = gameServer.getLatestDataPlayers(1);
+					}
+					else
+					{
+						data = gameServer.getLatestDataPlayers(2);
+					}
 					if (data == null)
 					{
 						continue;
@@ -250,16 +275,15 @@ public class GameMachine {
 					//System.out.println("    |  e passou!");
 					String s = new String(data.Event);
 					float v = data.Value;
-					if (b1)
+					//if (b1)
 					{
 						System.out.println("s = " + s + " | v = " + v);
-						if (s.matches("BallChange"))
+						if (s.equals("BallChange"))
 						{
 							ballType = (int) v;
 							gw.chooseBallType(ballType-1);
-						} else if (s.matches("Move"))
+						} else if (s.equals("Move"))
 						{
-							System.out.println("->>>>>>>" + v);
 							if ((int) v == 0)
 							{
 								gw.moveBallLeft();
@@ -267,10 +291,11 @@ public class GameMachine {
 							{
 								gw.moveBallRight();
 							}
-						} else if (s.matches("BallForce"))
+						} else if (s.equals("BallForce"))
 						{
 							Force = -v;
-						} else if (s.matches("BallRoll"))
+							System.out.println("ball force");
+						} else if (s.equals("BallRoll"))
 						{
 							Roll = -v;
 							gw.releaseBall(Force, Roll);
@@ -283,8 +308,8 @@ public class GameMachine {
 					}
 				}
 			}
-			
-			
+
+
 		}
 
 		Thread threading = new Thread( new ThreadBetter(gameWindow, b));
@@ -297,7 +322,7 @@ public class GameMachine {
 		gameWindow.chooseBallType(-1);
 		Random rnd = new Random();
 		int move = rnd.nextInt(30);
-		
+
 		if (rnd.nextInt(2) == 0)
 		{
 			gameWindow.moveBallLeft(move);
@@ -307,7 +332,7 @@ public class GameMachine {
 			gameWindow.moveBallRight(move);
 			move = -move;
 		}
-		
+
 		if (move < 0)
 		{
 			move = rnd.nextInt(30);
@@ -316,7 +341,7 @@ public class GameMachine {
 		{
 			move = -rnd.nextInt(30);
 		}
-		
+
 		int numero = -(rnd.nextInt(1000) + 1000);
 		gameWindow.releaseBall(numero, move);
 		System.out.println("Computador: " + numero);

@@ -77,12 +77,12 @@ public class GameWindow  extends ApplicationAdapter {
 	btDispatcher dispatcher;
 	btCollisionConfiguration collisionConfig;
 	GameMachine gameMachine;
-	
+
 	class HelloThread extends Thread {
-		 public void run() {
-			 Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/Pin Fall.mp3"));
-			 sound.play(1.0f);
-		    }
+		public void run() {
+			Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/Pin Fall.mp3"));
+			sound.play(1.0f);
+		}
 	}
 
 	class MyContactListener extends ContactListener {
@@ -92,9 +92,9 @@ public class GameWindow  extends ApplicationAdapter {
 				((ColorAttribute)instances.get(userValue0).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);
 			if (match1)
 				((ColorAttribute)instances.get(userValue1).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);*/
-			
+
 			new HelloThread().start();
-			
+
 			return true;
 		}
 	}
@@ -245,7 +245,6 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void moveBallRight() {
 		// TODO Auto-generated method stub
-		System.out.println("ballGo.body.getCenterOfMassPosition().z = " + ballGo.body.getCenterOfMassPosition().z);
 		if (ballGo.body.getCenterOfMassPosition().z > -35)
 		{
 			ballGo.transform.trn(0f, 0f, -1f);
@@ -255,7 +254,6 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void moveBallLeft() {
 		// TODO Auto-generated method stub
-		System.out.println("ballGo.body.getCenterOfMassPosition().z = " + ballGo.body.getCenterOfMassPosition().z);
 		if (ballGo.body.getCenterOfMassPosition().z < 35)
 		{
 			ballGo.transform.trn(0f, 0f, 1f);
@@ -283,7 +281,6 @@ public class GameWindow  extends ApplicationAdapter {
 
 	public void chooseBallType(int i) {
 		// TODO Auto-generated method stub
-		System.out.println("Ball Type: " + i);
 		switch (i)
 		{
 		case 0:
@@ -448,8 +445,6 @@ public class GameWindow  extends ApplicationAdapter {
 			pinGo[i-1].body.setContactCallbackFlag(GROUND_FLAG);
 			pinGo[i-1].body.setContactCallbackFilter(OBJECT_FLAG);
 			pinGo[i-1].body.setMassProps(1.64f, new Vector3(500f, 500f, 500f));
-
-			System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition());
 		}
 	}
 
@@ -537,7 +532,8 @@ public class GameWindow  extends ApplicationAdapter {
 							gameMachine.configTimerToEnd();
 							gameMachine.configSpawnTime(gameMachine.timeToSpawn);
 							gameMachine.launching = false;
-							gameMachine.notifyPlayer(pinUp);				
+							checkPinsUp();
+							gameMachine.notifyPlayer(pinUp);
 						}
 					}
 
@@ -547,20 +543,18 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								System.out.println("True !");
+								System.out.println("Entrou aqui primeiro");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								System.out.println("False !");
+								System.out.println("Entrou aqui segundo");
 								arePinsUp();
-								System.out.println("----------------");
 								finish();
-								System.out.println("Mas Passou!");
 							}
-							
+
 							if (gameMachine.waitingPlayer == false)
 							{
 								gameMachine.waitingPlayer = true;
@@ -575,16 +569,16 @@ public class GameWindow  extends ApplicationAdapter {
 						}
 						else if (!gameMachine.waitingPlayer)
 						{
-							System.out.println("Maquina2 -> True");
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
+								System.out.println("primeiro!!!");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								System.out.println("Maquina -> False");
+								System.out.println("segundo!!!");
 								arePinsUp();
 								finish();
 							}
@@ -639,22 +633,46 @@ public class GameWindow  extends ApplicationAdapter {
 		}
 	}
 
+	private void checkPinsUp() {
+		// TODO Auto-generated method stub
+		int count = 0;
+		for (int i = 1; i <= 10; i++)
+		{
+			if (pinUp[i-1])
+			{
+				if (pinGo[i-1] != null && pinGo[i-1].body != null && pinGo[i-1].body.getCenterOfMassPosition() != null)
+				{
+					System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 8");
+					pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
+
+					if (!pinUp[i-1])
+					{
+						count++;
+					}
+				}
+			}
+		}
+
+		System.out.println("checkPinsUp = " + count);
+	}
+
 	private void arePinsUp() {
 		// TODO Auto-generated method stub
 		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
 			pinUp[i-1] = false;
+			System.out.print("encravou");
 			if (pinGo[i-1] != null)
 			{
-				System.out.println("Pin " + (i-1) + " : " + pinGo[i-1].body.getCenterOfMassPosition() + " -> " + !(pinGo[i-1].body.getCenterOfMassPosition().y < 5));
 				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
 			}
+			System.out.println("     #sqn");
 			isStrike = isStrike || pinUp[i-1];
 		}
 
 		gameMachine.restartPins = false;
-		
+
 		if (!isStrike)
 		{
 			for (int i = 1; i <= 10; i++)
@@ -671,8 +689,10 @@ public class GameWindow  extends ApplicationAdapter {
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
+			System.out.println("1i = " + i + " <> pinUp = " + pinUp[i-1]);
 			if (!pinUp[i-1])
 			{
+				System.out.println("2i = " + i);
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
@@ -688,7 +708,7 @@ public class GameWindow  extends ApplicationAdapter {
 			pinGo[i-1].transform.trn(-pinGo[i-1].transform.M03, -pinGo[i-1].transform.M13 + 17, -pinGo[i-1].transform.M23);
 			pinGoTrn(i);
 		}
-		
+
 		if (gameMachine.restartPins)
 		{
 			pin10set();
@@ -713,6 +733,7 @@ public class GameWindow  extends ApplicationAdapter {
 		{
 			if (pinUp[i-1] != null && pinUp[i-1])
 			{
+				System.out.print("foi aqui?");
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
@@ -720,6 +741,7 @@ public class GameWindow  extends ApplicationAdapter {
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
 				}
+				System.out.println("      nao");
 			}
 		}
 		pin10set();
