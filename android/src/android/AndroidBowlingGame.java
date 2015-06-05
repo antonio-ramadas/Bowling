@@ -42,7 +42,10 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 	private SpriteBatch batch;
 	private BitmapFont font;
-	private int width, height;
+	private float width, height;
+	private float width_scale, height_scale;
+	
+	
 	private String textmessages;
 
 	private String PlayerName = "";
@@ -56,7 +59,6 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 	Texture QRbuttonText;
 	Sprite QRbuttonSprite;
-
 	Texture BallText;
 	Sprite  BallSprite;
 	int Ballchoice;
@@ -79,14 +81,16 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	public void setMyGameCallback(Callback callback) {callbackInterface = callback;}
 	Callback callbackInterface;
 
-
+	boolean stopsending = false;
 
 	public void create() {
 		batch = new SpriteBatch();
 		font = new BitmapFont();
 		font.setColor(Color.RED);
 		width = Gdx.graphics.getWidth();
-		height = Gdx.graphics.getHeight(); 
+		height = Gdx.graphics.getHeight();
+		width_scale = width/480f;
+		height_scale = height/720f;
 		if(Gdx.input.isPeripheralAvailable(Peripheral.Compass))
 			textmessages = "Please Input your Player Name";
 		else
@@ -139,7 +143,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			case 0:
 				break;
 			case 1:
-				Gdx.gl.glClearColor(0, .93f, 0, 1);
+				Gdx.gl.glClearColor(1, 0, 0, 1);
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				break;
 			case 2:
@@ -147,7 +151,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				break;
 			case 3:
-				Gdx.gl.glClearColor(1, 0, 0, 1);
+				Gdx.gl.glClearColor(0, .93f, 0, 1);
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				break;
 			default:
@@ -176,6 +180,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		QRbuttonText = new Texture(Gdx.files.internal("QRbutton.png"));
 		QRbuttonSprite = new Sprite(QRbuttonText);
 		QRbuttonSprite.setX(width/2 - width/3); QRbuttonSprite.setY(3*height/4 - 100); 
+		QRbuttonSprite.setScale(width_scale, height_scale);
 		Gamestate = 2;
 
 		(new Thread() {
@@ -313,11 +318,55 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		PlaySprite.setX(width/2 - PlaySprite.getWidth()/2);PlaySprite.setY(height/5);
 
 		Gamestate = 7;
+		
+		(new Thread() {
+			public void run() {
+				long time = System.currentTimeMillis();
+				while(Gamestate == 7)
+				{
+					long timedisplacement = System.currentTimeMillis() - time;
+					if (timedisplacement > 100)
+					{
+						time = System.currentTimeMillis();
+						timedisplacement = 0;
+						
+						if (Gdx.input.isTouched())
+						{
+							int screenX = Gdx.input.getX();
+							int screenY = Gdx.input.getY();
+							
+							
+							if (screenX > ArrowSpriteLeft.getX() && screenX <  ArrowSpriteLeft.getX()+ArrowSpriteLeft.getWidth() 
+									&& screenY < (height - ArrowSpriteLeft.getY()) 
+									&& screenY > (height- (ArrowSpriteLeft.getY()+ArrowSpriteLeft.getHeight()))
+									)
+							{
+
+								playerClient.sendMessageServer("Move", 0);
+							}
+							
+							if (screenX > ArrowSpriteRight.getX() && screenX <  ArrowSpriteRight.getX()+ArrowSpriteRight.getWidth() 
+									&& screenY < (height - ArrowSpriteRight.getY()) 
+									&& screenY > (height- (ArrowSpriteRight.getY()+ArrowSpriteRight.getHeight()))
+									)
+							{
+
+								playerClient.sendMessageServer("Move", 1);
+							}
+							
+							
+						}
+					}
+				}
+			}
+		}
+				).start();
 
 
 	}
 	public void stateBallSwing()
 	{
+		stopsending = false;
 		textmessages = "Touch anywhere on the screen, hold and SWING!";
 		motionState = 0;
 		Gamestate = 8;
@@ -329,7 +378,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 				boolean goingupwards = false;
 				float pitch;
 
-				while(motionState != 3)
+				while(motionState != 3 && !stopsending)
 				{
 					pitch = Gdx.input.getPitch();
 					
@@ -360,6 +409,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					{
 						finalrollvalue = Gdx.input.getRoll();
 						elapsedtime = System.currentTimeMillis() - startTime;
+						elapsedtime = ((elapsedtime -50) * (-30/19)) + 2500;
 						motionState = 3;
 					}
 
@@ -374,6 +424,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 	public void stateAwaitingResults()
 	{
+		stopsending = true;
 		textmessages = "The Ball is moving, please wait...";
 
 
@@ -443,9 +494,9 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			stateQRPrompt();
 			return true;
 		}		
-		if (Gamestate == 2 && screenX > QRbuttonSprite.getX() && screenX <  QRbuttonSprite.getX()+QRbuttonSprite.getWidth() 
+		if (Gamestate == 2 && screenX > QRbuttonSprite.getX() && screenX <  QRbuttonSprite.getX()+(QRbuttonSprite.getWidth()*width_scale) 
 				&& screenY < (height - QRbuttonSprite.getY()) 
-				&& screenY > (height- (QRbuttonSprite.getY()+QRbuttonSprite.getHeight()))
+				&& screenY > (height- (QRbuttonSprite.getY()+QRbuttonSprite.getHeight()*height_scale))
 				)
 		{
 			callbackInterface.startScannerActivity();
