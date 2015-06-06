@@ -169,7 +169,7 @@ public class GameMachine {
 			spriteBatch.begin();
 			QRimage.setCenter(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
 			QRimage.draw(spriteBatch);
-			
+
 			if (gameServer.player1_isConnected)
 			{
 				player1ImageSprite.draw(spriteBatch);
@@ -178,7 +178,7 @@ public class GameMachine {
 			{
 				player1NotSprite.draw(spriteBatch);
 			}
-			
+
 			if (gameServer.player2_isConnected)
 			{
 				player2ImageSprite.draw(spriteBatch);
@@ -187,7 +187,7 @@ public class GameMachine {
 			{
 				player2NotSprite.draw(spriteBatch);
 			}			
-			
+
 			spriteBatch.end();
 		}
 
@@ -208,16 +208,16 @@ public class GameMachine {
 		player2Not = new Texture("bin/playerNotRight.png");
 		player1Image = new Texture("bin/playerConnectedLeft.png");
 		player2Image = new Texture("bin/playerConnectedRight.png");
-		
+
 		player1NotSprite = new Sprite(player1Not);
 		player1NotSprite.setPosition(0, -30);
-		
+
 		player2NotSprite = new Sprite(player2Not);
 		player2NotSprite.setPosition(Gdx.graphics.getWidth() - player2NotSprite.getWidth(), -30);
-		
+
 		player1ImageSprite = new Sprite(player1Image);
 		player1ImageSprite.setPosition(0, -30);
-		
+
 		player2ImageSprite = new Sprite(player2Image);
 		player2ImageSprite.setPosition(Gdx.graphics.getWidth() - player2ImageSprite.getWidth(), -30);
 	}
@@ -226,10 +226,10 @@ public class GameMachine {
 		// TODO Auto-generated method stub
 		waitPlayer(i);
 
-		System.out.println(i);
+		//System.out.println(i);
 
 		DataPacket d = gameServer.getLatestDataPlayers(i);
-		System.out.println(i + " " + d.Event);
+		//System.out.println(i + " " + d.Event);
 		if (d.Event.equals("Name"))
 		{
 			waitPlayer(i);
@@ -240,7 +240,7 @@ public class GameMachine {
 
 	private void setPlayerName(int i, String event) {
 		// TODO Auto-generated method stub
-		System.out.println(i + " Nome " + event);
+		//System.out.println(i + " Nome " + event);
 		if (i == 1)
 		{
 			player1.setName(event);
@@ -285,8 +285,8 @@ public class GameMachine {
 
 		restartPins = (count == 10);
 
-		System.out.println("count = " + count);
-		System.out.println("numberPinsDown = " + numberPinsDown);
+		//System.out.println("count = " + count);
+		//System.out.println("numberPinsDown = " + numberPinsDown);
 
 		if (restartPins)
 		{
@@ -304,10 +304,10 @@ public class GameMachine {
 		if (isPlayer1Turn)
 		{
 			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
-			System.out.println("---------------------------------------");
-			System.out.println("player 1 turn: " + isPlayer1Turn);
-			System.out.println("player 1 score: " + player1.getScoreBoard().getTotalScore());
-			System.out.println("---------------------------------------");
+			//System.out.println("---------------------------------------");
+			//System.out.println("player 1 turn: " + isPlayer1Turn);
+			//System.out.println("player 1 score: " + player1.getScoreBoard().getTotalScore());
+			//System.out.println("---------------------------------------");
 			gameServer.sendMessagePlayer(1, "jogou", 15);
 
 			int play = player1.getScoreBoard().getLastPlay();
@@ -323,10 +323,10 @@ public class GameMachine {
 				gameServer.sendMessagePlayer(2, "jogou", 15);
 			}
 			gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
-			System.out.println("---------------------------------------");
-			System.out.println("player 2 turn: " + !isPlayer1Turn);
-			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
-			System.out.println("---------------------------------------");
+			//System.out.println("---------------------------------------");
+			//System.out.println("player 2 turn: " + !isPlayer1Turn);
+			//System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
+			//System.out.println("---------------------------------------");
 
 			int play = player2.getScoreBoard().getLastPlay();
 			int frame = (play+1)/2;
@@ -338,6 +338,12 @@ public class GameMachine {
 				if (gameIsOver)
 				{
 					writeToImageFinal();
+					gameServer.sendMessagePlayer(1, "acabou", 1);
+
+					if (is2Players)
+					{
+						gameServer.sendMessagePlayer(2, "acabou", 1);
+					}
 				}
 				else
 				{
@@ -353,20 +359,20 @@ public class GameMachine {
 		if (pins1 == 10 && pins1+pins2 == 10)
 		{
 			soundStrike.play(0.3f);
-			System.out.println("play strike");
+			//System.out.println("play strike");
 			return;
 		}
 
 		if (pins1 + pins2 == 10)
 		{
 			soundSpare.play(0.3f);
-			System.out.println("play spare");
+			//System.out.println("play spare");
 		}
 
 		return;
 	}
 
-	private void writeToImageFinal() {
+	public void writeToImageFinal() {
 		// TODO Auto-generated method stub
 		int play = player1.getScoreBoard().latestScoredFrame();
 		image.writeScoreHalfPlay(1, play, 1, firstSquare(player1.getScoreBoard().getPinsFelled(2*play-1)));
@@ -390,8 +396,8 @@ public class GameMachine {
 		backgroundTexture = new Texture("bin/scoreSheet.png");
 		backgroundSprite = new Sprite(backgroundTexture);
 		spriteBatch = new SpriteBatch();
-		backgroundSprite.setSize(Gdx.graphics.getWidth(), backgroundSprite.getHeight() * (backgroundSprite.getHeight()/Gdx.graphics.getWidth()));
-		backgroundSprite.setPosition(0, Gdx.graphics.getHeight()- (Gdx.graphics.getHeight() - backgroundSprite.getHeight()));
+		backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() * (backgroundSprite.getHeight()/Gdx.graphics.getHeight()));
+		backgroundSprite.setPosition(0, Gdx.graphics.getHeight() / 2 - backgroundSprite.getHeight() / 2);
 
 		timerToEnd = 15f;
 
@@ -435,7 +441,7 @@ public class GameMachine {
 
 	public void getPlayerPlay(GameWindow gameWindow, boolean b) {
 
-		System.out.println("Entrou no getPlayerPlay!!!!");
+		//System.out.println("Entrou no getPlayerPlay!!!!");
 		class ThreadBetter implements Runnable{
 			private GameWindow gw;
 			boolean b1;
@@ -454,9 +460,9 @@ public class GameMachine {
 			public void run() {
 				while (!stop)
 				{
-					//System.out.println(b1 + " " + gameServer.readPlayer1);
+					////System.out.println(b1 + " " + gameServer.readPlayer1);
 					DataPacket data;
-					//System.out.println("entrou...");
+					////System.out.println("entrou...");
 					try {
 						Thread.sleep(10);
 					} catch (InterruptedException e) {
@@ -475,12 +481,12 @@ public class GameMachine {
 					{
 						continue;
 					}
-					//System.out.println("    |  e passou!");
+					////System.out.println("    |  e passou!");
 					String s = new String(data.Event);
 					float v = data.Value;
 					//if (b1)
 					{
-						System.out.println("s = " + s + " | v = " + v);
+						//System.out.println("s = " + s + " | v = " + v);
 						if (s.equals("BallChange"))
 						{
 							ballType = (int) v;
@@ -497,12 +503,12 @@ public class GameMachine {
 						} else if (s.equals("BallForce"))
 						{
 							Force = -v;
-							System.out.println("ball force");
+							//System.out.println("ball force");
 						} else if (s.equals("BallRoll"))
 						{
 							Roll = -v;
 							gw.releaseBall(Force, Roll);
-							System.out.println("Ball type: " + ballType + " Force: " + Force + " Roll: " + Roll);
+							//System.out.println("Ball type: " + ballType + " Force: " + Force + " Roll: " + Roll);
 							stop = true;
 							launching = true;
 							waitingPlayer = false;
@@ -547,7 +553,7 @@ public class GameMachine {
 
 		int numero = -(rnd.nextInt(1000) + 1000);
 		gameWindow.releaseBall(numero, move);
-		System.out.println("Computador: " + numero);
+		//System.out.println("Computador: " + numero);
 	}
 
 	public void sendPoints(boolean b) {

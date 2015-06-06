@@ -537,7 +537,7 @@ public class GameWindow  extends ApplicationAdapter {
 		modelBatch.end();
 
 		boolean temp_play = gameMachine.isPlayer1Turn;
-
+		
 		try {
 			if (gameMachine.gameIsOver == false)
 			{
@@ -565,14 +565,14 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								System.out.println("Entrou aqui primeiro");
+								//System.out.println("Entrou aqui primeiro");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								System.out.println("Entrou aqui segundo");
+								//System.out.println("Entrou aqui segundo");
 								arePinsUp();
 								finish();
 							}
@@ -593,14 +593,14 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								System.out.println("primeiro!!!");
+								//System.out.println("primeiro!!!");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								System.out.println("segundo!!!");
+								//System.out.println("segundo!!!");
 								arePinsUp();
 								finish();
 							}
@@ -629,14 +629,14 @@ public class GameWindow  extends ApplicationAdapter {
 			}
 			else //jogo acabou
 			{
-				System.out.println("Acabou o jogo!!!!");
+				//System.out.println("Acabou o jogo!!!!");
 
 				gameMachine.spriteBatch.begin();
 				gameMachine.backgroundSprite.draw(gameMachine.spriteBatch);
 				gameMachine.spriteBatch.end();
 
 				if ((gameMachine.timerToEnd -= delta) < 0)
-				{
+				{					
 					System.exit(0);
 				}
 			}
@@ -673,7 +673,7 @@ public class GameWindow  extends ApplicationAdapter {
 			{
 				if (pinGo[i-1] != null && pinGo[i-1].body != null && pinGo[i-1].body.getCenterOfMassPosition() != null)
 				{
-					System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 10");
+					//System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 10");
 					pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
 
 					if (!pinUp[i-1])
@@ -682,7 +682,7 @@ public class GameWindow  extends ApplicationAdapter {
 						index = instances.indexOf(pinGo[i-1], true);
 						if (index >= 0)
 						{
-							System.out.println("removeu: " + i);
+							//System.out.println("removeu: " + i);
 							instances.removeIndex(index);
 							dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 							pinGo[i-1].dispose();
@@ -692,7 +692,7 @@ public class GameWindow  extends ApplicationAdapter {
 			}
 		}
 
-		System.out.println("checkPinsUp = " + count);
+		//System.out.println("checkPinsUp = " + count);
 	}
 
 	private void arePinsUp() {
@@ -700,7 +700,7 @@ public class GameWindow  extends ApplicationAdapter {
 		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
-			System.out.print("encravou");
+			//System.out.print("encravou");
 			if (pinGo[i-1] != null && pinUp[i-1])
 			{
 				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
@@ -709,7 +709,7 @@ public class GameWindow  extends ApplicationAdapter {
 			{
 				pinUp[i-1] = false;
 			}
-			System.out.println("     #sqn");
+			//System.out.println("     #sqn");
 			isStrike = isStrike || pinUp[i-1];
 		}
 
@@ -731,14 +731,14 @@ public class GameWindow  extends ApplicationAdapter {
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
-			System.out.println("1i = " + i + " <> pinUp = " + pinUp[i-1]);
+			//System.out.println("1i = " + i + " <> pinUp = " + pinUp[i-1]);
 			if (!pinUp[i-1])
 			{
-				System.out.println("2i = " + i);
+				//System.out.println("2i = " + i);
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
-					System.out.println("removeu: " + i);
+					//System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
@@ -776,16 +776,16 @@ public class GameWindow  extends ApplicationAdapter {
 		{
 			if (pinUp[i-1] != null && pinUp[i-1])
 			{
-				System.out.print("foi aqui?");
+				//System.out.print("foi aqui?");
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
-					System.out.println("removeu: " + i);
+					//System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
 				}
-				System.out.println("      nao");
+				//System.out.println("      nao");
 			}
 		}
 		pin10set();
