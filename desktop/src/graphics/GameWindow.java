@@ -12,6 +12,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -77,12 +78,30 @@ public class GameWindow  extends ApplicationAdapter {
 	btDispatcher dispatcher;
 	btCollisionConfiguration collisionConfig;
 	GameMachine gameMachine;
+	Sound soundMusic;
 
-	class HelloThread extends Thread {
+	class CollisionThread extends Thread {
 		public void run() {
 			Random r = new Random();
 			Sound sound = Gdx.audio.newSound(Gdx.files.internal("bin/pin" + (r.nextInt(3) + 1) +".mp3"));
 			sound.play(1.0f);
+		}
+	}
+
+	class MusicThread extends Thread {
+		public void run() {
+			soundMusic = Gdx.audio.newSound(Gdx.files.internal("bin/soundMusic.mp3"));
+			soundMusic.loop(0.2f);
+			try {
+				while (!gameMachine.gameIsOver)
+				{
+					Thread.sleep(100);
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			soundMusic.stop();
 		}
 	}
 
@@ -94,7 +113,7 @@ public class GameWindow  extends ApplicationAdapter {
 			if (match1)
 				((ColorAttribute)instances.get(userValue1).materials.get(0).get(ColorAttribute.Diffuse)).color.set(Color.WHITE);*/
 
-			new HelloThread().start();
+			new CollisionThread().start();
 
 			return true;
 		}
@@ -188,6 +207,7 @@ public class GameWindow  extends ApplicationAdapter {
 		}
 
 		gameMachine.configSpawnTime(gameMachine.timeToSpawn);
+		startSound();
 		//restartPins();
 
 		/*ImagePontuation p = new ImagePontuation();
@@ -218,6 +238,11 @@ public class GameWindow  extends ApplicationAdapter {
 		//releaseBall(-550f, 0f);
 		//moveBallLeft();
 		//moveBallRight();
+	}
+
+	private void startSound() {
+		// TODO Auto-generated method stub
+		new MusicThread().start();
 	}
 
 	private void configEnvironment() {
@@ -609,7 +634,15 @@ public class GameWindow  extends ApplicationAdapter {
 			else //jogo acabou
 			{
 				System.out.println("Acabou o jogo!!!!");
-				System.exit(0);
+
+				gameMachine.spriteBatch.begin();
+				gameMachine.backgroundSprite.draw(gameMachine.spriteBatch);
+				gameMachine.spriteBatch.end();
+
+				if ((gameMachine.timerToEnd -= delta) < 0)
+				{
+					System.exit(0);
+				}
 			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -662,11 +695,14 @@ public class GameWindow  extends ApplicationAdapter {
 		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
-			pinUp[i-1] = false;
 			System.out.print("encravou");
-			if (pinGo[i-1] != null)
+			if (pinGo[i-1] != null && pinUp[i-1])
 			{
 				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
+			}
+			else
+			{
+				pinUp[i-1] = false;
 			}
 			System.out.println("     #sqn");
 			isStrike = isStrike || pinUp[i-1];

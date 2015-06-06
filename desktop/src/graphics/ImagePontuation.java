@@ -72,7 +72,7 @@ public class ImagePontuation {
 		for (int i = 1; i < play; i++)
 		{
 			x += 25;
-			x += 47;
+			x += 48;
 		}
 		
 		if (turn == 2)
@@ -108,7 +108,7 @@ public class ImagePontuation {
 
 		for (int i = 1; i < play; i++)
 		{
-			x += 70;
+			x += 73;
 		}
 		
 		process(x, y, points, 35, Color.red);

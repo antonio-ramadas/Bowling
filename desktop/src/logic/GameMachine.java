@@ -9,6 +9,8 @@ import java.net.InetAddress;
 import java.util.Random;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
@@ -40,6 +42,32 @@ public class GameMachine {
 	public boolean waitingPlayer;
 	public ImagePontuation image;
 
+	public Sprite backgroundSprite;
+	public Texture backgroundTexture;
+
+	Sound soundStrike;
+	Sound soundSpare;
+	Sound soundGameOver;
+
+	class ConnectionThread extends Thread {
+		public void run() {
+			try {
+				gameServer.connectPlayers(1);
+
+				while (!gameServer.player1_isConnected)
+					Thread.sleep(10);
+
+				gameServer.connectPlayers(2);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public GameMachine () throws IOException
 	{
 		player1 = new Player("");
@@ -50,12 +78,8 @@ public class GameMachine {
 		gameIsOver = false;
 		waitingPlayer = false;
 
-		image = new ImagePontuation();
-
 		try {
 			gameServer = new Server();
-			gameServer.connectPlayers(1);
-			gameServer.connectPlayers(2);
 
 			spriteBatch = new SpriteBatch();
 			QRimage = (new QRCode(InetAddress.getLocalHost().getHostAddress(), 200, 200)).getImage();
@@ -65,6 +89,13 @@ public class GameMachine {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		new ConnectionThread().start();
+		
+		image = new ImagePontuation();
+		soundStrike = Gdx.audio.newSound(Gdx.files.internal("bin/strike.mp3"));
+		soundSpare = Gdx.audio.newSound(Gdx.files.internal("bin/spare.mp3"));
+		soundGameOver = Gdx.audio.newSound(Gdx.files.internal("bin/gameOver.mp3"));
 	}
 
 	public void configTimerToEnd() {
@@ -220,6 +251,10 @@ public class GameMachine {
 			System.out.println("player 1 score: " + player1.getScoreBoard().getTotalScore());
 			System.out.println("---------------------------------------");
 			gameServer.sendMessagePlayer(1, "jogou", 15);
+
+			int play = player1.getScoreBoard().latestScoredFrame();
+
+			checkAndPlaySound(player1.getScoreBoard().getNextPlay() % 2 + 1, player1.getScoreBoard().getPinsFelled(2*play-1), player1.getScoreBoard().getPinsFelled(2*play));
 		}
 		else
 		{
@@ -233,6 +268,10 @@ public class GameMachine {
 			System.out.println("player 2 turn: " + !isPlayer1Turn);
 			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
 			System.out.println("---------------------------------------");
+
+			int play = player2.getScoreBoard().latestScoredFrame();
+
+			checkAndPlaySound(player2.getScoreBoard().getNextPlay() % 2 + 1, player2.getScoreBoard().getPinsFelled(2*play-1), player2.getScoreBoard().getPinsFelled(2*play));
 
 			if (isPlayer1Turn)
 			{
@@ -249,6 +288,27 @@ public class GameMachine {
 		}
 	}
 
+	private void checkAndPlaySound(int turn, int pins1, int pins2)
+	{
+		System.out.println("Turn = " + turn + " pins1 = " + pins1 + " pins2 = " + pins2);
+		if (turn == 1)
+		{
+			if (pins1 == 10)
+			{
+				soundStrike.play(1f);
+			}
+
+			return;
+		}
+
+		if (pins1 + pins2 == 10)
+		{
+			soundSpare.play(1f);
+		}
+
+		return;
+	}
+
 	private void writeToImageFinal() {
 		// TODO Auto-generated method stub
 		int play = player1.getScoreBoard().latestScoredFrame();
@@ -259,40 +319,50 @@ public class GameMachine {
 		image.writeScoreHalfPlay(2, play, 1, firstSquare(player2.getScoreBoard().getPinsFelled(2*play-1)));
 		image.writeScoreHalfPlay(2, play, 2, firstSquare(player2.getScoreBoard().getPinsFelled(2*play)));
 		image.writeScoreHalfPlay(2, play, 3, firstSquare(player2.getScoreBoard().getPinsFelled(2*play+1)));
-		
+
 		for (int i = 1; i <= 10; i++)
 		{
 			image.writeScorePlay(1, i, Integer.toString(player1.getScoreBoard().getScoreFrame(i)));
 			image.writeScorePlay(2, i, Integer.toString(player2.getScoreBoard().getScoreFrame(i)));
 		}
-		
+
 		image.writeFinalScore(player1.getScoreBoard().getTotalScore(), player2.getScoreBoard().getTotalScore());
-		
+
 		image.exportImage();
+
+		backgroundTexture = new Texture("bin/scoreSheet.png");
+		backgroundSprite = new Sprite(backgroundTexture);
+		spriteBatch = new SpriteBatch();
+		backgroundSprite.setSize(Gdx.graphics.getWidth(), backgroundSprite.getHeight() * (backgroundSprite.getHeight()/Gdx.graphics.getWidth()));
+		backgroundSprite.setPosition(0, Gdx.graphics.getHeight()- (Gdx.graphics.getHeight() - backgroundSprite.getHeight()));
+
+		timerToEnd = 15f;
+
+		soundGameOver.play(1f);
 	}
-	
+
 	private String secondSquare(int first, int second)
 	{
 		if (first == 10)
 		{
 			return "";
 		}
-		
+
 		if (first + second == 10)
 		{
 			return "/";
 		}
-		
+
 		return Integer.toString(second);
 	}
-	
+
 	private String firstSquare(int first)
 	{
 		if (first == 10)
 		{
 			return "X";
 		}
-		
+
 		return Integer.toString(first);
 	}
 
