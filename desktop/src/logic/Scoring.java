@@ -12,6 +12,12 @@ public class Scoring {
 
 	private Frame[] scoreChart = new Frame[11];
 	private int nextPlay = 0;
+	private int lastPlay = 0;
+
+	public int getLastPlay() {
+		return lastPlay;
+	}
+
 
 	public Scoring(){
 		for (int i = 1; i <= 10 ; i++ )
@@ -64,15 +70,22 @@ public class Scoring {
 		{
 			scoreChart[10].secondChance = pinsDown;
 			if (scoreChart[10].firstChance == 10 || (scoreChart[10].secondChance+scoreChart[10].secondChance) == 10)
+			{
+				lastPlay = nextPlay;
 				nextPlay++;
+			}
 			else
+			{
+				lastPlay = nextPlay;
 				nextPlay = -1;
+			}
 			return true;
 		}
 
 		if (nextPlay == 21)
 		{
 			scoreChart[10].thirdChance = pinsDown;
+			lastPlay = nextPlay;
 			nextPlay = -1;
 			return true;
 		}
@@ -88,8 +101,12 @@ public class Scoring {
 		{
 			scoreChart[FramePlay].firstChance = pinsDown;
 			if (pinsDown == 10 && nextPlay != 19) //Strike, skip the second play
+			{
+				lastPlay = nextPlay;
 				nextPlay++;			
+			}
 		}	
+		lastPlay = nextPlay;
 		nextPlay++;	
 
 		return true;

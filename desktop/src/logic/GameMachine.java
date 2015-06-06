@@ -13,7 +13,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.Array;
 
 import connections.*;
 
@@ -44,6 +43,14 @@ public class GameMachine {
 
 	public Sprite backgroundSprite;
 	public Texture backgroundTexture;
+	Texture player1Not;
+	Texture player2Not;
+	Texture player1Image;
+	Texture player2Image;
+	Sprite player1NotSprite;
+	Sprite player2NotSprite;
+	Sprite player1ImageSprite;
+	Sprite player2ImageSprite;
 
 	Sound soundStrike;
 	Sound soundSpare;
@@ -91,7 +98,9 @@ public class GameMachine {
 		}
 
 		new ConnectionThread().start();
-		
+
+		loadImages();
+
 		image = new ImagePontuation();
 		soundStrike = Gdx.audio.newSound(Gdx.files.internal("bin/strike.mp3"));
 		soundSpare = Gdx.audio.newSound(Gdx.files.internal("bin/spare.mp3"));
@@ -135,6 +144,7 @@ public class GameMachine {
 					connectionTime = 15f;
 					ret = true;
 					setNameOfPlayer(2);
+					disposePlayerImages();
 					gameServer.sendMessagePlayer(1, "TIME", 0);
 					gameServer.sendMessagePlayer(2, "TIME", 0);
 					image.writePlayersName(player1.getName(), player2.getName());
@@ -147,6 +157,7 @@ public class GameMachine {
 					isPlayer1Turn = true;
 					ret = true;
 					player2.setName("Computador");
+					disposePlayerImages();
 					gameServer.sendMessagePlayer(1, "TIME", 0);
 					image.writePlayersName(player1.getName(), player2.getName());
 				}
@@ -158,10 +169,57 @@ public class GameMachine {
 			spriteBatch.begin();
 			QRimage.setCenter(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
 			QRimage.draw(spriteBatch);
+			
+			if (gameServer.player1_isConnected)
+			{
+				player1ImageSprite.draw(spriteBatch);
+			}
+			else
+			{
+				player1NotSprite.draw(spriteBatch);
+			}
+			
+			if (gameServer.player2_isConnected)
+			{
+				player2ImageSprite.draw(spriteBatch);
+			}
+			else
+			{
+				player2NotSprite.draw(spriteBatch);
+			}			
+			
 			spriteBatch.end();
 		}
 
 		return ret;
+	}
+
+	private void disposePlayerImages() {
+		// TODO Auto-generated method stub
+		player1Not.dispose();
+		player2Not.dispose();
+		player1Image.dispose();
+		player2Image.dispose();
+	}
+
+	private void loadImages() {
+		// TODO Auto-generated method stub
+		player1Not = new Texture("bin/playerNotLeft.png");
+		player2Not = new Texture("bin/playerNotRight.png");
+		player1Image = new Texture("bin/playerConnectedLeft.png");
+		player2Image = new Texture("bin/playerConnectedRight.png");
+		
+		player1NotSprite = new Sprite(player1Not);
+		player1NotSprite.setPosition(0, -30);
+		
+		player2NotSprite = new Sprite(player2Not);
+		player2NotSprite.setPosition(Gdx.graphics.getWidth() - player2NotSprite.getWidth(), -30);
+		
+		player1ImageSprite = new Sprite(player1Image);
+		player1ImageSprite.setPosition(0, -30);
+		
+		player2ImageSprite = new Sprite(player2Image);
+		player2ImageSprite.setPosition(Gdx.graphics.getWidth() - player2ImageSprite.getWidth(), -30);
 	}
 
 	private void setNameOfPlayer(int i) throws InterruptedException {
@@ -240,9 +298,9 @@ public class GameMachine {
 		return numberPinsDown;
 	}
 
-
 	public void notifyPlayer(Boolean[] pin) {
 		// TODO Auto-generated method stub
+
 		if (isPlayer1Turn)
 		{
 			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
@@ -252,9 +310,10 @@ public class GameMachine {
 			System.out.println("---------------------------------------");
 			gameServer.sendMessagePlayer(1, "jogou", 15);
 
-			int play = player1.getScoreBoard().latestScoredFrame();
+			int play = player1.getScoreBoard().getLastPlay();
+			int frame = (play+1)/2;
 
-			checkAndPlaySound(player1.getScoreBoard().getNextPlay() % 2 + 1, player1.getScoreBoard().getPinsFelled(2*play-1), player1.getScoreBoard().getPinsFelled(2*play));
+			checkAndPlaySound(player1.getScoreBoard().getPinsFelled(frame*2 - 1), player1.getScoreBoard().getPinsFelled(frame*2));
 		}
 		else
 		{
@@ -269,9 +328,10 @@ public class GameMachine {
 			System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
 			System.out.println("---------------------------------------");
 
-			int play = player2.getScoreBoard().latestScoredFrame();
+			int play = player2.getScoreBoard().getLastPlay();
+			int frame = (play+1)/2;
 
-			checkAndPlaySound(player2.getScoreBoard().getNextPlay() % 2 + 1, player2.getScoreBoard().getPinsFelled(2*play-1), player2.getScoreBoard().getPinsFelled(2*play));
+			checkAndPlaySound(player2.getScoreBoard().getPinsFelled(frame*2 - 1), player2.getScoreBoard().getPinsFelled(frame*2));
 
 			if (isPlayer1Turn)
 			{
@@ -288,22 +348,19 @@ public class GameMachine {
 		}
 	}
 
-	private void checkAndPlaySound(int turn, int pins1, int pins2)
+	private void checkAndPlaySound(int pins1, int pins2)
 	{
-		System.out.println("Turn = " + turn + " pins1 = " + pins1 + " pins2 = " + pins2);
-		if (turn == 1)
+		if (pins1 == 10 && pins1+pins2 == 10)
 		{
-			if (pins1 == 10)
-			{
-				soundStrike.play(1f);
-			}
-
+			soundStrike.play(0.3f);
+			System.out.println("play strike");
 			return;
 		}
 
 		if (pins1 + pins2 == 10)
 		{
-			soundSpare.play(1f);
+			soundSpare.play(0.3f);
+			System.out.println("play spare");
 		}
 
 		return;
@@ -338,7 +395,7 @@ public class GameMachine {
 
 		timerToEnd = 15f;
 
-		soundGameOver.play(1f);
+		soundGameOver.play(0.3f);
 	}
 
 	private String secondSquare(int first, int second)

@@ -15,9 +15,9 @@ public class DesktopLauncher {
 	
 	public static void configWindow(LwjglApplicationConfiguration config)
 	{
-		/*config.fullscreen = true;
+		config.fullscreen = true;
 		config.width = 1366;
-		config.height = 768;*/
+		config.height = 768;
 		config.title = "Bowling Game";
 		config.x = -1;
 		config.y = -1;

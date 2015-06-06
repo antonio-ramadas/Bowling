@@ -1,7 +1,6 @@
 package graphics;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Random;
 
 import logic.GameMachine;
@@ -12,10 +11,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -670,18 +666,27 @@ public class GameWindow  extends ApplicationAdapter {
 	private void checkPinsUp() {
 		// TODO Auto-generated method stub
 		int count = 0;
+		int index;
 		for (int i = 1; i <= 10; i++)
 		{
 			if (pinUp[i-1])
 			{
 				if (pinGo[i-1] != null && pinGo[i-1].body != null && pinGo[i-1].body.getCenterOfMassPosition() != null)
 				{
-					System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 8");
-					pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
+					System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 10");
+					pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
 
 					if (!pinUp[i-1])
 					{
 						count++;
+						index = instances.indexOf(pinGo[i-1], true);
+						if (index >= 0)
+						{
+							System.out.println("removeu: " + i);
+							instances.removeIndex(index);
+							dynamicsWorld.removeRigidBody(pinGo[i-1].body);
+							pinGo[i-1].dispose();
+						}
 					}
 				}
 			}
@@ -698,7 +703,7 @@ public class GameWindow  extends ApplicationAdapter {
 			System.out.print("encravou");
 			if (pinGo[i-1] != null && pinUp[i-1])
 			{
-				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 8);
+				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
 			}
 			else
 			{
@@ -733,6 +738,7 @@ public class GameWindow  extends ApplicationAdapter {
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
+					System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
@@ -774,6 +780,7 @@ public class GameWindow  extends ApplicationAdapter {
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
+					System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
