@@ -87,7 +87,7 @@ public class GameWindow  extends ApplicationAdapter {
 	class MusicThread extends Thread {
 		public void run() {
 			soundMusic = Gdx.audio.newSound(Gdx.files.internal("bin/soundMusic.mp3"));
-			soundMusic.loop(0.2f);
+			soundMusic.loop(0.4f);
 			try {
 				while (!gameMachine.gameIsOver)
 				{

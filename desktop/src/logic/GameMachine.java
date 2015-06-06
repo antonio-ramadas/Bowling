@@ -401,7 +401,7 @@ public class GameMachine {
 
 		timerToEnd = 15f;
 
-		soundGameOver.play(0.3f);
+		soundGameOver.play(1f);
 	}
 
 	private String secondSquare(int first, int second)
