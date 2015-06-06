@@ -260,8 +260,8 @@ public class GameWindow  extends ApplicationAdapter {
 		ballGo.body.setContactCallbackFilter(GROUND_FLAG);
 
 		//propriedades da bola
-		ballGo.body.setFriction(0);
-		ballGo.body.setRollingFriction(0);
+		ballGo.body.setFriction(1);
+		ballGo.body.setRollingFriction(1);
 		chooseBallType(0);
 	}
 
