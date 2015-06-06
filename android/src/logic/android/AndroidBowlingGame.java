@@ -6,12 +6,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Input.Peripheral;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.BitmapFont.BitmapFontData;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -19,21 +17,19 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFont
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldStyle;
 
 import connections.Client;
 import connections.DataPacket;
 
 public class AndroidBowlingGame implements ApplicationListener, InputProcessor, GestureListener  {
 
-	private int Gamestate = 0;
+	private int Gamestate;
 	// 0 - Not yet initialized
 	// 1 - Player Inputs Name
+	// 5 - About Page
 	// 2 - Before Connecting / QR Prompt
 	// 3 - Attempting Connection
 	// 4 - Wait for other Players
-	// 5 - About Page, the old state #5 became unecesary by design
 	// 6 - Play or Scores
 	// 7 - Ball Selection and Strafing
 	// 8 - Playing the Ball
@@ -79,15 +75,24 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private Sprite BackButton;
 	private Sprite Crown;
 	private Sprite RotatingBall;
+	private Texture BallRotateText;
 	private Texture waittext;
+	private Texture EinsteinianQuote;
+	private Texture SecretAreDoingIt;
 	private Sprite WaitThrobber;
+	private Sprite LoadingScreen;
 	int Ballchoice;
-	private boolean receivingScores = false;
 
+
+	private boolean receivingScores = false;
 	int motionState = 0;
 	float finalrollvalue = 0;	
 	long startTime;
 	long elapsedtime;
+	private boolean stopsending = false;
+	private boolean runonce = false;
+	int ninetyninthelement = 0;
+
 
 	String log1 = "nada";
 	String log2 = "nada";
@@ -99,150 +104,173 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	public void setMyGameCallback(Callback callback) {callbackInterface = callback;}
 	Callback callbackInterface;
 
-	boolean stopsending = false;
-
 
 	public void create() {
 		batch = new SpriteBatch();
-		initgraphics();
-		InputMultiplexer im = new InputMultiplexer();
-		GestureDetector gd = new GestureDetector(this);
-		im.addProcessor(gd);
-		im.addProcessor(this);
-		Gdx.input.setInputProcessor(im);
+		width = Gdx.graphics.getWidth();
+		height = Gdx.graphics.getHeight();
+		width_scale = width/480f;
+		height_scale = height/720f;	
+		font = new BitmapFont();
+		font.setColor(Color.RED);
+		LoadingScreen = new Sprite(new Texture(Gdx.files.internal("Loading.png")));
+		defineSprite(0, 0, LoadingScreen);
 
-		startPermanentPollers();
+		stateInitializing();
 	}
 
 	public void render() {
 		Gdx.gl.glClearColor(1, 1, 1, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
-		BackgroundImage.draw(batch);
-		if (Gamestate == 1)
-		{
-			LogoImage.draw(batch);
-			font42.setColor(Color.RED);
-			font42.draw(batch, "Nome:", width/2 - width/6, height/2);
-			font42.setColor(Color.BLUE);
-			font42.draw(batch, PlayerName, width/2 - width/5, height/2 - height/16);
-			ButaoEntradaJogar.draw(batch);
-			ButaoEntradaSobre.draw(batch);
-			ButaoEntradaSair.draw(batch);
-		}
-		if (Gamestate == 2)
-		{
-			QRbuttonSprite.draw(batch);
-		}
-		if (Gamestate == 3)
-		{
-			fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
-			WaitThrobber.draw(batch);
-		}
-		if (Gamestate == 4)
-		{
-			fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
-			fontAtari.draw(batch, timerstring,  width/2, 3*height/4 - height/16);
-			fontLPOO.draw(batch, largecountdown, width/2 - width/36, height/5);
-			WaitThrobber.draw(batch);
-		}
-		if (Gamestate == 6)
-		{
-			if (receivingScores)
-			{
-				fontAtariLarger.draw(batch, "Scores", 0.40f*width, 0.90f*height);
 
-				if (OtherPlayerName.equals("Computador"))
-					OtherPlayerName = "CPU";
-
-				font42.draw(batch, PlayerName, 0.40f*width, 0.70f*height);
-				fontScores.draw(batch, Integer.toString(MyScore), 0.45f*width, 0.60f*height);
-
-				if (OtherPlayerName == "???")
-				{
-					font42.setColor(Color.BLACK);
-					font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
-					font42.setColor(Color.BLUE);
-				}
-				else
-					font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
-				fontScores.draw(batch, Integer.toString(OtherPlayerScore), 0.45f*width, 0.30f*height);
-				
-				if (MyScore > OtherPlayerScore)
-				{
-					Crown.setX(0.65f*width);
-					Crown.setY(0.60f*height);
-				}
-				else
-				{
-					Crown.setX(0.65f*width);
-					Crown.setY(0.30f*height);
-				}
-				if (MyScore != OtherPlayerScore)
-					Crown.draw(batch);
-			}
-		}
-		if (Gamestate == 7)
+		if (Gamestate == 0)
 		{
-			BallSprite.draw(batch);
-			ArrowSpriteLeft.draw(batch);
-			ArrowSpriteRight.draw(batch);
-			PlaySprite.draw(batch);
+			LoadingScreen.draw(batch);
 		}
-		if (Gamestate == 8)
+		else
 		{
-			fontAtari.draw(batch, "Instruções de lançamento:", width/2 - 2*width/5, 3*height/4);
-			fontAtari.draw(batch, " * Segurar no ecrã com o dedo", width/2 - 2*width/5, 3*height/4 - height/24);
-			fontAtari.draw(batch, " * Faz um movimento em arco de baixo para cima.", width/2 - 2*width/5, 3*height/4 - 2*height/24);
-			fontAtari.draw(batch, " * Largar o dedo para permitir a bola sair", width/2 - 2*width/5, 3*height/4 - 3*height/24);
-
-			switch(motionState)
-			{
-			case 0:
-				break;
-			case 1:
-				Gdx.gl.glClearColor(.93f, 0, 0, 1);
-				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-				break;
-			case 2:
-				Gdx.gl.glClearColor(.93f, .93f, 0, 1);
-				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-				break;
-			case 3:
-				Gdx.gl.glClearColor(0, .93f, 0, 1);
-				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-				break;
-			default:
-				break;
-			}
-
 			BackgroundImage.draw(batch);
-		}
-		if (Gamestate == 9)
-		{
-			
-			RotatingBall.draw(batch);
-		}
-		if (Gamestate == 5)
-		{
-			fontLPOO.draw(batch, "LPOO", width/2-width/6, 5*height/6);
-			fontAbout.draw(batch, "Pedro Carvalho nº 201306506", width/7, 5*height/6 - height/6);
-			fontAbout.draw(batch, "   António Ramadas nº 201303568", width/7, 5*height/6 - height/6 - height/12);
-			BackButton.draw(batch);
-			RotatingBall.draw(batch);
-		}
+			if (Gamestate == 1)
+			{
+				LogoImage.draw(batch);
+				font42.setColor(Color.RED);
+				font42.draw(batch, "Nome:", width/2 - width/6, height/2);
+				font42.setColor(Color.BLUE);
+				font42.draw(batch, PlayerName, width/2 - width/5, height/2 - height/16);
+				ButaoEntradaJogar.draw(batch);
+				ButaoEntradaSobre.draw(batch);
+				ButaoEntradaSair.draw(batch);
+			}
+			if (Gamestate == 2)
+			{
+				QRbuttonSprite.draw(batch);
+			}
+			if (Gamestate == 3)
+			{
+				fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
+				WaitThrobber.draw(batch);
+			}
+			if (Gamestate == 4)
+			{
+				fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
+				fontAtari.draw(batch, timerstring,  width/2, 3*height/4 - height/16);
+				fontLPOO.draw(batch, largecountdown, width/2 - width/36, height/5);
+				WaitThrobber.draw(batch);
+			}
+			if (Gamestate == 6)
+			{
+				if (receivingScores)
+				{
+					fontAtariLarger.draw(batch, "Scores", 0.40f*width, 0.90f*height);
 
-		//font.draw(batch, log1, 0, 20);
-		//font.draw(batch, log2, 0, 40);
-		//font.draw(batch, log3, 0, 60);
-		//font.draw(batch, log4, 0, 80);
-		//font.draw(batch, log5, 0, 100);
+					if (OtherPlayerName.equals("Computador"))
+						OtherPlayerName = "CPU";
+
+					font42.draw(batch, PlayerName, 0.40f*width, 0.70f*height);
+					fontScores.draw(batch, Integer.toString(MyScore), 0.45f*width, 0.60f*height);
+
+					if (OtherPlayerName == "???")
+					{
+						font42.setColor(Color.BLACK);
+						font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
+						font42.setColor(Color.BLUE);
+					}
+					else
+						font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
+					fontScores.draw(batch, Integer.toString(OtherPlayerScore), 0.45f*width, 0.30f*height);
+
+					if (MyScore > OtherPlayerScore)
+					{
+						Crown.setX(0.65f*width);
+						Crown.setY(0.60f*height);
+					}
+					else
+					{
+						Crown.setX(0.65f*width);
+						Crown.setY(0.30f*height);
+					}
+					if (MyScore != OtherPlayerScore)
+						Crown.draw(batch);
+				}
+			}
+			if (Gamestate == 7)
+			{
+				BallSprite.draw(batch);
+				ArrowSpriteLeft.draw(batch);
+				ArrowSpriteRight.draw(batch);
+				PlaySprite.draw(batch);
+			}
+			if (Gamestate == 8)
+			{
+				fontAtari.draw(batch, "Instruções de lançamento:", width/2 - 2*width/5, 3*height/4);
+				fontAtari.draw(batch, " * Segurar no ecrã com o dedo", width/2 - 2*width/5, 3*height/4 - height/24);
+				fontAtari.draw(batch, " * Faz um movimento em arco de baixo para cima.", width/2 - 2*width/5, 3*height/4 - 2*height/24);
+				fontAtari.draw(batch, " * Largar o dedo para permitir a bola sair", width/2 - 2*width/5, 3*height/4 - 3*height/24);
+
+				switch(motionState)
+				{
+				case 0:
+					break;
+				case 1:
+					Gdx.gl.glClearColor(.93f, 0, 0, 1);
+					Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+					break;
+				case 2:
+					Gdx.gl.glClearColor(.93f, .93f, 0, 1);
+					Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+					break;
+				case 3:
+					Gdx.gl.glClearColor(0, .93f, 0, 1);
+					Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+					break;
+				default:
+					break;
+				}
+
+				BackgroundImage.draw(batch);
+			}
+			if (Gamestate == 9)
+			{
+				fontAtariLarger.draw(batch, "Waiting for Results", 0.30f*width, 0.90f*height);
+				RotatingBall.draw(batch);
+			}
+			if (Gamestate == 5)
+			{
+				fontLPOO.draw(batch, "LPOO", width/2-width/6, 5*height/6);
+				fontAbout.draw(batch, "Pedro Carvalho nº 201306506", width/7, 5*height/6 - height/6);
+				fontAbout.draw(batch, "   António Ramadas nº 201303568", width/7, 5*height/6 - height/6 - height/12);
+				BackButton.draw(batch);
+				RotatingBall.draw(batch);
+			}
+
+			//font.draw(batch, log1, 0, 20);
+			//font.draw(batch, log2, 0, 40);
+			//font.draw(batch, log3, 0, 60);
+			//font.draw(batch, log4, 0, 80);
+			//font.draw(batch, log5, 0, 100);
+		}
 		batch.end();
 
+		if(runonce)
+		{
+			runonce = false;
+			initgraphics();
+			statePlayerName();
+		}else
+		{
+			if (Gamestate == 0)
+				runonce = true;
+			//Makes sense in context: Render() must complete at least once for the loading screen to show.
+		}
 	}
 
 
 
+	private void stateInitializing()
+	{
+		Gamestate = 0;
+	}
 	private void statePlayerName()
 	{	
 		Gamestate = 1; 
@@ -251,6 +279,28 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	{
 		BackButton = new Sprite(ArrowText);
 		defineSprite(width/2 - BackButton.getWidth()*width_scale/2, height/8, BackButton);
+		ninetyninthelement++;
+
+		if (PlayerName.equals("DOGE") || PlayerName.equals("doge"))
+		{
+			RotatingBall = new Sprite(SecretAreDoingIt);
+			defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+			RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
+		}
+		else if (ninetyninthelement == 10)
+		{
+			RotatingBall = new Sprite(EinsteinianQuote);
+			defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+			RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
+			
+		}
+		else
+		{
+			RotatingBall = new Sprite(BallRotateText);
+			defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+			RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
+		}
+
 		Gamestate = 5; 
 	}
 	private void stateQRPrompt()
@@ -258,7 +308,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		textmessages = PlayerName + ": Use QRCode to scan game server's IP address";
 		QRbuttonText = new Texture(Gdx.files.internal("Scan.png"));
 		QRbuttonSprite = new Sprite(QRbuttonText);
-		defineSprite(width/2 - QRbuttonSprite.getWidth()*width_scale/2, height/2, QRbuttonSprite);
+		defineSprite(width/2 - QRbuttonSprite.getWidth()*width_scale/2, 0.3f*height, QRbuttonSprite);
 
 		Gamestate = 2;
 
@@ -391,6 +441,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 						OtherPlayerScore = (int) received.Value;
 						receivingScores = true;
 					} 
+					else if (received.Event.equals("acabou"))
+					{
+						Gdx.app.exit();
+						stop = true;
+					} 
 					else if (received.Event.equals("Turno"))
 					{
 						stop = true;
@@ -398,7 +453,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 
 				}
-				
+
 				stateGameOptions();
 
 			}
@@ -486,6 +541,19 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private void stateAwaitingResults()
 	{
 		BallText = new Texture(Gdx.files.internal("BBall1.png"));
+		if (PlayerName.equals("DOGE") || PlayerName.equals("doge"))
+		{
+			RotatingBall = new Sprite(SecretAreDoingIt);
+			defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+			RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
+		}
+		else
+		{
+			RotatingBall = new Sprite(BallRotateText);
+			defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+			RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
+		}
+		
 		Ballchoice = 1;
 		textmessages = "The Ball is moving, please wait...";
 		Gamestate = 9;
@@ -553,6 +621,26 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		return false;
 	}
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+		if (Gamestate == 1 && screenX < 100 && screenY < 100 && pointer == 1)
+		{
+			/*
+			 * Escrever o texto antes o escalamento da imagem estar pronto foi das coisas mais chatas
+			 * que tivemos que aturar num telemovel com resolução Full HD durante o teste do jogo pois
+			 * a text box que lá se encontrava era pequenissima e a detecção de toque nem sequer
+			 * correspondia ao que aparecia no ecra.
+			 * 
+			 * A utilidade desta função de definir o nome instantaneamente apenas ao carregar no canto do ecrã
+			 * foi tão util que recebeu o direito de ficar no jogo final... para quem encontrar. 
+			 * 
+			 * Com um bonus! ;D
+			 * 
+			 */
+
+			PlayerName = "DOGE";
+			stateQRPrompt();
+			return true;
+		}		
+
 		if (Gamestate == 1 && checkColision(screenX, screenY, ButaoEntradaJogar))
 		{
 			Gdx.input.setOnscreenKeyboardVisible(true);
@@ -568,12 +656,6 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			stateAbout();
 			return true;
 		}
-		if (Gamestate == 1 && screenX < 100 && screenY < 100)
-		{
-			PlayerName = "AAA";
-			stateQRPrompt();
-			return true;
-		}		
 		if (Gamestate == 2 && checkColision(screenX, screenY, QRbuttonSprite))
 		{
 			callbackInterface.startScannerActivity();
@@ -706,6 +788,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	public void resume() {
 	}
 	public void dispose() {
+		Gdx.app.exit();
 	}
 	public boolean keyUp(int keycode) {
 		return false;
@@ -798,14 +881,14 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					{
 						timer = System.currentTimeMillis();
 						elapsed = System.currentTimeMillis();
-						RotatingBall.setRotation(RotatingBall.getRotation() + 5);
+						RotatingBall.setRotation(RotatingBall.getRotation() + Gamestate);
 					}
 				}	
 			}
 		}
 				).start();
-		
-		
+
+
 	}
 	private boolean checkColision(int x, int y, Sprite colide)
 	{
@@ -840,14 +923,15 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		return (width * currentSize / currentWidth);
 	}
 	private void initgraphics() {
-		width = Gdx.graphics.getWidth();
-		height = Gdx.graphics.getHeight();
-		width_scale = width/480f;
-		height_scale = height/720f;
+
+		InputMultiplexer im = new InputMultiplexer();
+		GestureDetector gd = new GestureDetector(this);
+		im.addProcessor(gd);
+		im.addProcessor(this);
+		Gdx.input.setInputProcessor(im);
+
 		updatelog(""+width +"|"+height);
 		updatelog(""+width_scale +"|"+height_scale);
-		font = new BitmapFont();
-		font.setColor(Color.RED);
 		updatelog("Scales:"+font.getScaleX() +"|"+font.getScaleY());
 		if(Gdx.input.isPeripheralAvailable(Peripheral.Compass))
 			textmessages = "Please Input your Player Name";
@@ -856,7 +940,6 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		BallText = new Texture(Gdx.files.internal("BBall1.png"));
 		ArrowText = new Texture(Gdx.files.internal("leftarrow.png"));
 		PlayText = new Texture(Gdx.files.internal("PlayIcon.png"));
-		new Texture(Gdx.files.internal("Scorebutton.png"));
 		BackgroundImage = new Sprite(new Texture(Gdx.files.internal("Base.png")));
 		defineSprite(0,0,BackgroundImage);
 		LogoImage = new Sprite(new Texture(Gdx.files.internal("BowlingMain.png")));
@@ -864,39 +947,40 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		ButaoEntradaJogar = new Sprite(new Texture(Gdx.files.internal("ButaoJogar.png")));
 		ButaoEntradaSobre = new Sprite(new Texture(Gdx.files.internal("ButaoSobre.png")));
 		ButaoEntradaSair = new Sprite(new Texture(Gdx.files.internal("ButaoSair.png")));
+		SecretAreDoingIt = new Texture(Gdx.files.internal("secret.png"));
+		EinsteinianQuote = new Texture(Gdx.files.internal("DefinitionOfInsanity.jpg"));
 		waittext = new Texture(Gdx.files.internal("waiting.png"));
 
 		defineSprite(width/2 - ButaoEntradaJogar.getWidth()*width_scale/2,3*height/12,ButaoEntradaJogar);
 		defineSprite(width/2 - ButaoEntradaSobre.getWidth()*width_scale/2,2*height/12,ButaoEntradaSobre);
 		defineSprite(width/2 - ButaoEntradaSair.getWidth()*width_scale/2, 1*height/12,ButaoEntradaSair);
-		
+
 		Crown = new Sprite(new Texture(Gdx.files.internal("crown.png")));
 		defineSprite(0.65f*width, 0.60f*height, Crown);
-		RotatingBall = new Sprite(new Texture(Gdx.files.internal("Ball.png")));
+		BallRotateText = new Texture(Gdx.files.internal("Ball.png"));
+		RotatingBall = new Sprite(BallRotateText);
 		defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
 		RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
-		
+
+
 		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("SCOREBOARD.ttf"));
 		FreeTypeFontParameter parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (42 * width_scale);
 		parameter.color = Color.BLUE;
 		font42 = generator.generateFont(parameter);
 		generator.dispose();
-
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("TravelingTypewriter.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (22 * width_scale);
 		parameter.color = Color.BLACK;
 		fontAbout = generator.generateFont(parameter);
 		generator.dispose();
-
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("Long_Shot.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (92* width_scale);
 		parameter.color = Color.BLUE;
 		fontLPOO = generator.generateFont(parameter);
 		generator.dispose();
-
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("Atari.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (16* width_scale);
@@ -905,7 +989,6 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		parameter.size = (int) (28* width_scale);
 		fontAtariLarger = generator.generateFont(parameter);
 		generator.dispose();
-		
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("STENCIL.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (72 * width_scale);
@@ -913,7 +996,8 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		fontScores = generator.generateFont(parameter);
 		generator.dispose();
 
-		statePlayerName();
+		startPermanentPollers();
+
 	}
 }
 
