@@ -33,7 +33,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	// 2 - Before Connecting / QR Prompt
 	// 3 - Attempting Connection
 	// 4 - Wait for other Players
-		// 5 - About Page, the old state #5 became unecesary by design
+	// 5 - About Page, the old state #5 became unecesary by design
 	// 6 - Play or Scores
 	// 7 - Ball Selection and Strafing
 	// 8 - Playing the Ball
@@ -44,9 +44,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private Client playerClient;
 
 	private String textmessages;
+	private String timerstring = "";
+	private String largecountdown = "";
 	private String PlayerName = "";
 	private int PlayerNumber = 0;
-	private String OtherPlayerName = "";
+	private String OtherPlayerName = "???";
 	private int MyScore = 0;
 	private int OtherPlayerScore = 0;
 
@@ -55,6 +57,9 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private	BitmapFont fontAbout;
 	private	BitmapFont fontLPOO;
 	private BitmapFont font;
+	private BitmapFont fontAtari;
+	private BitmapFont fontAtariLarger;
+	private BitmapFont fontScores;
 	private float width, height;
 	private float width_scale, height_scale;
 	private Texture QRbuttonText;
@@ -66,15 +71,16 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private Sprite ArrowSpriteRight;
 	private Texture PlayText;
 	private Sprite PlaySprite;
-	private Texture ScoreText;
-	private Sprite ScoreButton;
 	private Sprite BackgroundImage;
 	private Sprite LogoImage;
 	private Sprite ButaoEntradaJogar;
 	private Sprite ButaoEntradaSobre;
 	private Sprite ButaoEntradaSair;
 	private Sprite BackButton;
-	private String OtherScores = "";
+	private Sprite Crown;
+	private Sprite RotatingBall;
+	private Texture waittext;
+	private Sprite WaitThrobber;
 	int Ballchoice;
 	private boolean receivingScores = false;
 
@@ -95,6 +101,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 	boolean stopsending = false;
 
+
 	public void create() {
 		batch = new SpriteBatch();
 		initgraphics();
@@ -106,17 +113,19 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 		startPermanentPollers();
 	}
-	
+
 	public void render() {
 		Gdx.gl.glClearColor(1, 1, 1, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		batch.begin();
-		font.draw(batch, textmessages, width/2 - width/3, 3*height/4);
 		BackgroundImage.draw(batch);
 		if (Gamestate == 1)
 		{
 			LogoImage.draw(batch);
-			font42.draw(batch, "Name:" + PlayerName, width/2 - width/4, height/2 - height/16);
+			font42.setColor(Color.RED);
+			font42.draw(batch, "Nome:", width/2 - width/6, height/2);
+			font42.setColor(Color.BLUE);
+			font42.draw(batch, PlayerName, width/2 - width/5, height/2 - height/16);
 			ButaoEntradaJogar.draw(batch);
 			ButaoEntradaSobre.draw(batch);
 			ButaoEntradaSair.draw(batch);
@@ -125,13 +134,52 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		{
 			QRbuttonSprite.draw(batch);
 		}
+		if (Gamestate == 3)
+		{
+			fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
+			WaitThrobber.draw(batch);
+		}
+		if (Gamestate == 4)
+		{
+			fontAtari.draw(batch, textmessages, width/2 - width/3, 3*height/4);
+			fontAtari.draw(batch, timerstring,  width/2, 3*height/4 - height/16);
+			fontLPOO.draw(batch, largecountdown, width/2 - width/36, height/5);
+			WaitThrobber.draw(batch);
+		}
 		if (Gamestate == 6)
 		{
-			ScoreButton.draw(batch);
-			//PlaySprite.draw(batch);
 			if (receivingScores)
 			{
-				font.draw(batch, OtherScores, width/2 + width/4, 3*height/4);		
+				fontAtariLarger.draw(batch, "Scores", 0.40f*width, 0.90f*height);
+
+				if (OtherPlayerName.equals("Computador"))
+					OtherPlayerName = "CPU";
+
+				font42.draw(batch, PlayerName, 0.40f*width, 0.70f*height);
+				fontScores.draw(batch, Integer.toString(MyScore), 0.45f*width, 0.60f*height);
+
+				if (OtherPlayerName == "???")
+				{
+					font42.setColor(Color.BLACK);
+					font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
+					font42.setColor(Color.BLUE);
+				}
+				else
+					font42.draw(batch, OtherPlayerName, 0.40f*width, 0.40f*height);
+				fontScores.draw(batch, Integer.toString(OtherPlayerScore), 0.45f*width, 0.30f*height);
+				
+				if (MyScore > OtherPlayerScore)
+				{
+					Crown.setX(0.65f*width);
+					Crown.setY(0.60f*height);
+				}
+				else
+				{
+					Crown.setX(0.65f*width);
+					Crown.setY(0.30f*height);
+				}
+				if (MyScore != OtherPlayerScore)
+					Crown.draw(batch);
 			}
 		}
 		if (Gamestate == 7)
@@ -143,16 +191,21 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		}
 		if (Gamestate == 8)
 		{
+			fontAtari.draw(batch, "Instruções de lançamento:", width/2 - 2*width/5, 3*height/4);
+			fontAtari.draw(batch, " * Segurar no ecrã com o dedo", width/2 - 2*width/5, 3*height/4 - height/24);
+			fontAtari.draw(batch, " * Faz um movimento em arco de baixo para cima.", width/2 - 2*width/5, 3*height/4 - 2*height/24);
+			fontAtari.draw(batch, " * Largar o dedo para permitir a bola sair", width/2 - 2*width/5, 3*height/4 - 3*height/24);
+
 			switch(motionState)
 			{
 			case 0:
 				break;
 			case 1:
-				Gdx.gl.glClearColor(1, 0, 0, 1);
+				Gdx.gl.glClearColor(.93f, 0, 0, 1);
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				break;
 			case 2:
-				Gdx.gl.glClearColor(1, 1, 0, 1);
+				Gdx.gl.glClearColor(.93f, .93f, 0, 1);
 				Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 				break;
 			case 3:
@@ -162,6 +215,13 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			default:
 				break;
 			}
+
+			BackgroundImage.draw(batch);
+		}
+		if (Gamestate == 9)
+		{
+			
+			RotatingBall.draw(batch);
 		}
 		if (Gamestate == 5)
 		{
@@ -169,6 +229,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			fontAbout.draw(batch, "Pedro Carvalho nº 201306506", width/7, 5*height/6 - height/6);
 			fontAbout.draw(batch, "   António Ramadas nº 201303568", width/7, 5*height/6 - height/6 - height/12);
 			BackButton.draw(batch);
+			RotatingBall.draw(batch);
 		}
 
 		//font.draw(batch, log1, 0, 20);
@@ -181,16 +242,23 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 
 
+
 	private void statePlayerName()
 	{	
 		Gamestate = 1; 
 	}
+	private void stateAbout()
+	{
+		BackButton = new Sprite(ArrowText);
+		defineSprite(width/2 - BackButton.getWidth()*width_scale/2, height/8, BackButton);
+		Gamestate = 5; 
+	}
 	private void stateQRPrompt()
 	{
 		textmessages = PlayerName + ": Use QRCode to scan game server's IP address";
-		QRbuttonText = new Texture(Gdx.files.internal("QRbutton.png"));
+		QRbuttonText = new Texture(Gdx.files.internal("Scan.png"));
 		QRbuttonSprite = new Sprite(QRbuttonText);
-		defineSprite(width/2 - width/3, 3*height/4 - 100, QRbuttonSprite);
+		defineSprite(width/2 - QRbuttonSprite.getWidth()*width_scale/2, height/2, QRbuttonSprite);
 
 		Gamestate = 2;
 
@@ -208,10 +276,35 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	private void stateAwaitingConnection()
 	{
 		textmessages = PlayerName + ": You are now trying to connect to " + ServerIP;
+
+		WaitThrobber = new Sprite(waittext);
+		defineSpriteRotateable(width/2 - WaitThrobber.getWidth()*width_scale/2, height/5, WaitThrobber );
+		WaitThrobber.setOrigin(WaitThrobber.getWidth()/2, WaitThrobber.getHeight()/2);
+
 		playerClient = new Client(ServerIP);
 		playerClient.connectServer();
 
 		Gamestate = 3;
+
+		(new Thread() {
+			long timer;
+			long elapsed;
+			public void run() {
+				timer = System.currentTimeMillis();
+				elapsed = System.currentTimeMillis() - timer;
+				while(Gamestate == 3 || Gamestate == 4)
+				{
+					elapsed = System.currentTimeMillis() - timer;
+					if (elapsed > 17)
+					{
+						timer = System.currentTimeMillis();
+						elapsed = System.currentTimeMillis();
+						WaitThrobber.setRotation(WaitThrobber.getRotation() + 2);
+					}
+				}	
+			}
+		}
+				).start();
 
 
 		(new Thread() {
@@ -232,7 +325,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 	private void stateAwaitingPlayers()
 	{
-		textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber) +  " Timer: 15" ;
+		textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber);
 		Gamestate = 4;
 
 		(new Thread() {
@@ -248,7 +341,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					if(received.Value == 0)
 						stop = true;
 					else
-						textmessages = "Connected! You are Player Number " + Integer.toString(PlayerNumber) +  "Timer:" + Integer.toString( (int) received.Value);
+					{
+						timerstring = "Timer:" + Integer.toString( (int) received.Value);
+						if ((int) received.Value <= 5)
+							largecountdown =  Integer.toString( (int) received.Value);
+					}
 
 				}
 				stateWaitingTurn();
@@ -263,9 +360,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 	private void stateWaitingTurn()
 	{
-		textmessages = "You are now waiting for your turn";
-		ScoreButton = new Sprite(ScoreText);
-		defineSprite(width/2 - ScoreButton.getWidth()*width_scale/2 ,height/2 - ScoreButton.getHeight()*height_scale - 10, ScoreButton);
+		playerClient.sendMessageServer("Pontuacao", 1);  updatelog("Enviou Pontuacao|1");
 
 		Gamestate = 6;
 
@@ -294,6 +389,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					else if (received.Event.equals("PontuacaoOutro"))
 					{
 						OtherPlayerScore = (int) received.Value;
+						receivingScores = true;
 					} 
 					else if (received.Event.equals("Turno"))
 					{
@@ -302,6 +398,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 
 				}
+				
 				stateGameOptions();
 
 			}
@@ -341,7 +438,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 				boolean goingupwards = false;
 				float pitch;
 
-				while(motionState != 3 && !stopsending)
+				while(!stopsending)
 				{
 					pitch = Gdx.input.getPitch();
 
@@ -372,6 +469,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 					{
 						finalrollvalue = Gdx.input.getRoll();
 						elapsedtime = System.currentTimeMillis() - startTime;
+						if (elapsedtime > 1000) elapsedtime = 1000;
 						elapsedtime = ((elapsedtime -50) * (-30/19)) + 2500;
 						motionState = 3;
 					}
@@ -387,9 +485,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 	private void stateAwaitingResults()
 	{
-		stopsending = true;
+		BallText = new Texture(Gdx.files.internal("BBall1.png"));
+		Ballchoice = 1;
 		textmessages = "The Ball is moving, please wait...";
 		Gamestate = 9;
+		stopsending = true;
 
 
 		(new Thread() {
@@ -417,20 +517,23 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 
 	}
-	private void stateAbout()
-	{
-		BackButton = new Sprite(ArrowText);
-		defineSprite(width/2 - BackButton.getWidth()*width_scale/2, height/8, BackButton);
-		
-		Gamestate = 5; 
-	}
+
+
 
 	public boolean keyTyped(char character) {
 
-		if (Gamestate == 1 && PlayerName.length() < 8)
+		if (Gamestate == 1 && PlayerName.length() < 9)
 		{
-			PlayerName += character;
-			return true;
+			if (character >= 'A' && character <= 'Z')
+			{
+				character = Character.toLowerCase(character);
+			}
+			if ((character >= 'a' && character <= 'z') || (character >= '0' && character <= '9'))
+			{
+				PlayerName += character;
+				return true;
+			}
+
 		}
 
 		return false;
@@ -442,9 +545,9 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			stateQRPrompt();
 			return true;
 		}
-		if (Gamestate == 1 && keycode == Input.Keys.BACKSPACE)
+		if (Gamestate == 1 && keycode == Input.Keys.BACKSPACE && PlayerName.length() > 0)
 		{
-			PlayerName = "";
+			PlayerName = PlayerName.substring(0, PlayerName.length()-1);
 			return true;
 		}
 		return false;
@@ -478,15 +581,13 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		}
 		if (Gamestate == 6)
 		{
-			if (checkColision(screenX, screenY,ScoreButton))
+			/*if (checkColision(screenX, screenY,ScoreButton))
 			{			
 				playerClient.sendMessageServer("Pontuacao", 1);  updatelog("Enviou Pontuacao|1");
-				receivingScores = true;
-				textmessages = PlayerName + "Score: " + Integer.toString(MyScore);
-				OtherScores = OtherPlayerName + "Score: " + Integer.toString(OtherPlayerScore);
+
 
 				return true;
-			}
+			}*/
 		}	
 		if (Gamestate == 7)
 		{
@@ -511,7 +612,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			}
 
 		}
-		if (Gamestate == 8)
+		if (Gamestate == 8 && motionState != 3)
 		{
 			motionState = 1;
 			return true;
@@ -591,6 +692,8 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 
 
+
+
 	public boolean longPress(float x, float y) 
 	{
 
@@ -637,6 +740,8 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 	}
 
 
+
+
 	private void startPermanentPollers() {
 		//Holding buttons on state 7;
 		(new Thread() {
@@ -679,6 +784,28 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 			}
 		}
 				).start();
+		//Rotating the Rotating Ball sprite
+		(new Thread() {
+			long timer;
+			long elapsed;
+			public void run() {
+				timer = System.currentTimeMillis();
+				elapsed = System.currentTimeMillis() - timer;
+				while(true)
+				{
+					elapsed = System.currentTimeMillis() - timer;
+					if (elapsed > 17)
+					{
+						timer = System.currentTimeMillis();
+						elapsed = System.currentTimeMillis();
+						RotatingBall.setRotation(RotatingBall.getRotation() + 5);
+					}
+				}	
+			}
+		}
+				).start();
+		
+		
 	}
 	private boolean checkColision(int x, int y, Sprite colide)
 	{
@@ -695,6 +822,11 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		place.setX(x); place.setY(y); 
 		place.setBounds(x, y, place.getWidth()*width_scale, place.getHeight()*height_scale);	
 	}
+	private void defineSpriteRotateable (float x, float y, Sprite rotator)
+	{
+		rotator.setX(x); rotator.setY(y); 
+		rotator.setBounds(x, y, rotator.getWidth()*width_scale, rotator.getHeight()*width_scale);	
+	}
 	private void updatelog(String msg)
 	{
 		log5 = log4;
@@ -705,7 +837,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 
 	}
 	public float resizeText(float width, float currentSize, float currentWidth){
-	    return (width * currentSize / currentWidth);
+		return (width * currentSize / currentWidth);
 	}
 	private void initgraphics() {
 		width = Gdx.graphics.getWidth();
@@ -724,7 +856,7 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		BallText = new Texture(Gdx.files.internal("BBall1.png"));
 		ArrowText = new Texture(Gdx.files.internal("leftarrow.png"));
 		PlayText = new Texture(Gdx.files.internal("PlayIcon.png"));
-		ScoreText = new Texture(Gdx.files.internal("Scorebutton.png"));
+		new Texture(Gdx.files.internal("Scorebutton.png"));
 		BackgroundImage = new Sprite(new Texture(Gdx.files.internal("Base.png")));
 		defineSprite(0,0,BackgroundImage);
 		LogoImage = new Sprite(new Texture(Gdx.files.internal("BowlingMain.png")));
@@ -732,11 +864,17 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		ButaoEntradaJogar = new Sprite(new Texture(Gdx.files.internal("ButaoJogar.png")));
 		ButaoEntradaSobre = new Sprite(new Texture(Gdx.files.internal("ButaoSobre.png")));
 		ButaoEntradaSair = new Sprite(new Texture(Gdx.files.internal("ButaoSair.png")));
-		
+		waittext = new Texture(Gdx.files.internal("waiting.png"));
+
 		defineSprite(width/2 - ButaoEntradaJogar.getWidth()*width_scale/2,3*height/12,ButaoEntradaJogar);
 		defineSprite(width/2 - ButaoEntradaSobre.getWidth()*width_scale/2,2*height/12,ButaoEntradaSobre);
 		defineSprite(width/2 - ButaoEntradaSair.getWidth()*width_scale/2, 1*height/12,ButaoEntradaSair);
-
+		
+		Crown = new Sprite(new Texture(Gdx.files.internal("crown.png")));
+		defineSprite(0.65f*width, 0.60f*height, Crown);
+		RotatingBall = new Sprite(new Texture(Gdx.files.internal("Ball.png")));
+		defineSpriteRotateable(0.5f*width-RotatingBall.getWidth()/2*width_scale, 0.30f*height, RotatingBall);
+		RotatingBall.setOrigin(RotatingBall.getWidth()/2, RotatingBall.getHeight()/2);
 		
 		FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("SCOREBOARD.ttf"));
 		FreeTypeFontParameter parameter = new FreeTypeFontParameter();
@@ -744,23 +882,37 @@ public class AndroidBowlingGame implements ApplicationListener, InputProcessor, 
 		parameter.color = Color.BLUE;
 		font42 = generator.generateFont(parameter);
 		generator.dispose();
-		
+
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("TravelingTypewriter.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (22 * width_scale);
 		parameter.color = Color.BLACK;
 		fontAbout = generator.generateFont(parameter);
 		generator.dispose();
-		
+
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("Long_Shot.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = (int) (92* width_scale);
 		parameter.color = Color.BLUE;
 		fontLPOO = generator.generateFont(parameter);
 		generator.dispose();
-	
+
+		generator = new FreeTypeFontGenerator(Gdx.files.internal("Atari.ttf"));
+		parameter = new FreeTypeFontParameter();
+		parameter.size = (int) (16* width_scale);
+		parameter.color = Color.RED;
+		fontAtari = generator.generateFont(parameter);
+		parameter.size = (int) (28* width_scale);
+		fontAtariLarger = generator.generateFont(parameter);
+		generator.dispose();
 		
-		
+		generator = new FreeTypeFontGenerator(Gdx.files.internal("STENCIL.ttf"));
+		parameter = new FreeTypeFontParameter();
+		parameter.size = (int) (72 * width_scale);
+		parameter.color = Color.BLUE;
+		fontScores = generator.generateFont(parameter);
+		generator.dispose();
+
 		statePlayerName();
 	}
 }
