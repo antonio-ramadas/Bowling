@@ -438,7 +438,7 @@ public class GameMachine {
 		backgroundSprite.setSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight() * (backgroundSprite.getHeight()/Gdx.graphics.getHeight()));
 		backgroundSprite.setPosition(0, Gdx.graphics.getHeight() / 2 - backgroundSprite.getHeight() / 2);
 
-		timerToEnd = 15f;
+		timerToEnd = 30f;
 
 		soundGameOver.play(1f);
 	}
