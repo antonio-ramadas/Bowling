@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -42,7 +41,6 @@ public class Server {
 	public Server() throws IOException
 	{
 		serverSocket = new ServerSocket(IP_PORT);
-		//System.out.println("Servidor aberto em: " + InetAddress.getLocalHost().getHostAddress());
 	}
 
 	public Boolean connectPlayers(int PlayerNumber) throws IOException
@@ -118,7 +116,6 @@ public class Server {
 	
 	public void sendMessagePlayer(int PlayerNumber, String event, float value)
 	{
-		//System.out.println("A enviar (" + event + "|" + value  + ") Jogador " + PlayerNumber);
 		if (PlayerNumber == 1 && player1_isConnected == true)
 		{
 			outputToPlayer1.println(event);
@@ -137,9 +134,7 @@ public class Server {
 		public void run() {
 
 			try {
-				//System.out.println("Waiting for Player 1 to connect");
 				clientSocket[0] = serverSocket.accept();
-				//System.out.println("Player 1 connected");
 				inputFromPlayer1 = new BufferedReader(new InputStreamReader(clientSocket[0].getInputStream()));
 				outputToPlayer1 = new PrintStream(clientSocket[0].getOutputStream());
 
@@ -190,8 +185,7 @@ public class Server {
 							;
 						valuePlayer1 = Float.parseFloat(inputFromPlayer1.readLine());
 						Data1.setData(messagePlayer1, valuePlayer1);
-						//System.out.println("Recebeu (" + messagePlayer1 + "|" + valuePlayer1  + ") Jogador 1");
-
+						
 						readPlayer1 = true;
 					}
 				}	catch (NumberFormatException e) {e.printStackTrace();} 
@@ -215,8 +209,7 @@ public class Server {
 							;
 						valuePlayer2 = Float.parseFloat(inputFromPlayer2.readLine());
 						Data2.setData(messagePlayer2, valuePlayer2);
-						//System.out.println("Recebeu (" + messagePlayer2 + "|" + valuePlayer2  + ") Jogador 1");
-
+						
 						readPlayer2 = true;
 
 					}

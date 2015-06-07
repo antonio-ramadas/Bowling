@@ -57,6 +57,9 @@ public class GameMachine {
 	Sound soundGameOver;
 
 	class ConnectionThread extends Thread {
+		/**
+		 * Este método é uma thread à parte que tenta ligar-se aos dois jogadores.
+		 */
 		public void run() {
 			try {
 				gameServer.connectPlayers(1);
@@ -66,15 +69,18 @@ public class GameMachine {
 
 				gameServer.connectPlayers(2);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/**
+	 * Inicia a ligação aos dispositivos, origina o QRcode e
+	 * inicia as variáveis e carrega os sons
+	 * @throws IOException
+	 */
 	public GameMachine () throws IOException
 	{
 		player1 = new Player("");
@@ -93,7 +99,6 @@ public class GameMachine {
 			initial = true;
 			launching = false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -107,17 +112,32 @@ public class GameMachine {
 		soundGameOver = Gdx.audio.newSound(Gdx.files.internal("bin/gameOver.mp3"));
 	}
 
+	/**
+	 * Tempo para a ligação do jogador 2
+	 */
 	public void configTimerToEnd() {
-		// TODO Auto-generated method stub
 		timerToEnd = timeToEnd;
 	}
 
+	/**
+	 * Reinicia o tempo para o final da jogada.
+	 * Este tempo serve para impedir que caso uma bola fique parada no meio
+	 * do caminho, seja completa a jogada
+	 * 
+	 * @param f - tempo que a bola tem para percorrer o caminho
+	 */
 	public void configSpawnTime(float f) {
 		spawnTimer = f;
 	}
 
+	/**
+	 * Verifica se o jogador 1 já ligou. Em caso positivo, inicia a contagem decrescente
+	 * 
+	 * @param delta - tempo de atualização
+	 * @return false se ainda não se ligaram o(s) jogador(es)
+	 * @throws InterruptedException
+	 */
 	public boolean checkInitialConnection(float delta) throws InterruptedException {
-		// TODO Auto-generated method stub
 		Boolean ret = false;
 
 		if (gameServer.player1_isConnected)
@@ -132,7 +152,6 @@ public class GameMachine {
 			if (initial)
 			{
 				float temp = connectionTime - delta;
-				//temp = -1;
 
 				gameServer.sendMessagePlayer(1, "TIME", temp);
 
@@ -194,16 +213,21 @@ public class GameMachine {
 		return ret;
 	}
 
+	/**
+	 * Apaga as imagens do login do jogadores.
+	 * (as imagens dos cantos do ecrã inicial).
+	 */
 	private void disposePlayerImages() {
-		// TODO Auto-generated method stub
 		player1Not.dispose();
 		player2Not.dispose();
 		player1Image.dispose();
 		player2Image.dispose();
 	}
 
+	/**
+	 * Carrega as imagens necessárias para o ecrã inicial, assim como a sua posição.
+	 */
 	private void loadImages() {
-		// TODO Auto-generated method stub
 		player1Not = new Texture("bin/playerNotLeft.png");
 		player2Not = new Texture("bin/playerNotRight.png");
 		player1Image = new Texture("bin/playerConnectedLeft.png");
@@ -222,14 +246,16 @@ public class GameMachine {
 		player2ImageSprite.setPosition(Gdx.graphics.getWidth() - player2ImageSprite.getWidth(), -30);
 	}
 
+	/**
+	 * Define o nome do jogador i. Este nome é recebido pela rede.
+	 * @param i número do jogador
+	 * @throws InterruptedException
+	 */
 	private void setNameOfPlayer(int i) throws InterruptedException {
-		// TODO Auto-generated method stub
 		waitPlayer(i);
 
-		//System.out.println(i);
 
 		DataPacket d = gameServer.getLatestDataPlayers(i);
-		//System.out.println(i + " " + d.Event);
 		if (d.Event.equals("Name"))
 		{
 			waitPlayer(i);
@@ -238,9 +264,12 @@ public class GameMachine {
 		}	
 	}
 
+	/**
+	 * Guarda o nome (event) do jogador i 
+	 * @param i número do jogador
+	 * @param event nome do jogador
+	 */
 	private void setPlayerName(int i, String event) {
-		// TODO Auto-generated method stub
-		//System.out.println(i + " Nome " + event);
 		if (i == 1)
 		{
 			player1.setName(event);
@@ -251,8 +280,12 @@ public class GameMachine {
 		}
 	}
 
+	/**
+	 * Espera pela jogada do jogador i
+	 * @param i número do jogador
+	 * @throws InterruptedException
+	 */
 	private void waitPlayer(int i) throws InterruptedException {
-		// TODO Auto-generated method stub
 		if (i == 1)
 		{
 			while (!gameServer.readPlayer1)
@@ -265,11 +298,19 @@ public class GameMachine {
 		}
 	}
 
+	/**
+	 * Define a variável de número de pins no chão a 0.
+	 */
 	public void newPlay()
 	{
 		numberPinsDown = 0;
 	}
 
+	/**
+	 * Conta o número de pins que cairam.
+	 * @param pin array de booleans dos pinos
+	 * @return devolve o número de pinos que cairam na última jogada.
+	 */
 	public int numberPinsDown(Boolean[] pin)
 	{		
 		int count = 0;
@@ -285,9 +326,6 @@ public class GameMachine {
 
 		restartPins = (count == 10);
 
-		//System.out.println("count = " + count);
-		//System.out.println("numberPinsDown = " + numberPinsDown);
-
 		if (restartPins)
 		{
 			isPlayer1Turn = !isPlayer1Turn;
@@ -298,16 +336,16 @@ public class GameMachine {
 		return numberPinsDown;
 	}
 
+	/**
+	 * Notifica o jogador da pontuação calculada até ao momento e toca o som
+	 * spare ou strike caso o seja.
+	 * @param pin pin array de booleans dos pinos
+	 */
 	public void notifyPlayer(Boolean[] pin) {
-		// TODO Auto-generated method stub
 
 		if (isPlayer1Turn)
 		{
 			isPlayer1Turn = player1.makePlay(numberPinsDown(pin));
-			//System.out.println("---------------------------------------");
-			//System.out.println("player 1 turn: " + isPlayer1Turn);
-			//System.out.println("player 1 score: " + player1.getScoreBoard().getTotalScore());
-			//System.out.println("---------------------------------------");
 			gameServer.sendMessagePlayer(1, "jogou", 15);
 
 			int play = player1.getScoreBoard().getLastPlay();
@@ -323,10 +361,6 @@ public class GameMachine {
 				gameServer.sendMessagePlayer(2, "jogou", 15);
 			}
 			gameIsOver = (player2.getScoreBoard().getNextPlay() == -1);
-			//System.out.println("---------------------------------------");
-			//System.out.println("player 2 turn: " + !isPlayer1Turn);
-			//System.out.println("player 2 score: " + player2.getScoreBoard().getTotalScore());
-			//System.out.println("---------------------------------------");
 
 			int play = player2.getScoreBoard().getLastPlay();
 			int frame = (play+1)/2;
@@ -354,26 +388,31 @@ public class GameMachine {
 		}
 	}
 
+	/**
+	 * Toca o som correspondente ao spare ou ao strike
+	 * @param pins1 número de pinos caidos na primeira jogada
+	 * @param pins2 número de pinos caidos na segunda jogada
+	 */
 	private void checkAndPlaySound(int pins1, int pins2)
 	{
 		if (pins1 == 10 && pins1+pins2 == 10)
 		{
 			soundStrike.play(0.3f);
-			//System.out.println("play strike");
 			return;
 		}
 
 		if (pins1 + pins2 == 10)
 		{
 			soundSpare.play(0.3f);
-			//System.out.println("play spare");
 		}
 
 		return;
 	}
 
+	/**
+	 * Escreve o score final na imagem, toca o som final e carrega a tabela de pontuações
+	 */
 	public void writeToImageFinal() {
-		// TODO Auto-generated method stub
 		int play = player1.getScoreBoard().latestScoredFrame();
 		image.writeScoreHalfPlay(1, play, 1, firstSquare(player1.getScoreBoard().getPinsFelled(2*play-1)));
 		image.writeScoreHalfPlay(1, play, 2, firstSquare(player1.getScoreBoard().getPinsFelled(2*play)));
@@ -404,6 +443,12 @@ public class GameMachine {
 		soundGameOver.play(1f);
 	}
 
+	/**
+	 * Transforma o número de pinos caídos numa string para a tabela no segundo frame
+	 * @param first pinos caídos na primeira jogada
+	 * @param second pinos caídos na segunda jogada
+	 * @return string correspondente dos pinos caídos
+	 */
 	private String secondSquare(int first, int second)
 	{
 		if (first == 10)
@@ -419,6 +464,11 @@ public class GameMachine {
 		return Integer.toString(second);
 	}
 
+	/**
+	 * Transforma o número de pinos caídos numa string para a tabela no primeiro frame
+	 * @param first número de pinos caídos na primeira jogada
+	 * @return string correspondente dos pinos caídos
+	 */
 	private String firstSquare(int first)
 	{
 		if (first == 10)
@@ -429,8 +479,10 @@ public class GameMachine {
 		return Integer.toString(first);
 	}
 
+	/**
+	 * Preenche a tabela de pontuações nos frames intermédios
+	 */
 	private void writeToImage() {
-		// TODO Auto-generated method stub
 		int play = player1.getScoreBoard().latestScoredFrame();
 		image.writeScoreHalfPlay(1, play, 1, firstSquare(player1.getScoreBoard().getPinsFelled(2*play-1)));
 		image.writeScoreHalfPlay(1, play, 2, secondSquare(player1.getScoreBoard().getPinsFelled(2*play-1), player1.getScoreBoard().getPinsFelled(2*play)));
@@ -439,9 +491,13 @@ public class GameMachine {
 		image.writeScoreHalfPlay(2, play, 2, secondSquare(player2.getScoreBoard().getPinsFelled(2*play-1), player2.getScoreBoard().getPinsFelled(2*play)));
 	}
 
+	/**
+	 * Obtém o lançamento do jogador correspondente e faz a jogada
+	 * @param gameWindow para lançar a bola
+	 * @param b true se for o jogador 1, false se for o jogador 2
+	 */
 	public void getPlayerPlay(GameWindow gameWindow, boolean b) {
 
-		//System.out.println("Entrou no getPlayerPlay!!!!");
 		class ThreadBetter implements Runnable{
 			private GameWindow gw;
 			boolean b1;
@@ -460,13 +516,10 @@ public class GameMachine {
 			public void run() {
 				while (!stop)
 				{
-					////System.out.println(b1 + " " + gameServer.readPlayer1);
 					DataPacket data;
-					////System.out.println("entrou...");
 					try {
 						Thread.sleep(10);
 					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					if (b1)
@@ -481,12 +534,9 @@ public class GameMachine {
 					{
 						continue;
 					}
-					////System.out.println("    |  e passou!");
 					String s = new String(data.Event);
 					float v = data.Value;
-					//if (b1)
 					{
-						//System.out.println("s = " + s + " | v = " + v);
 						if (s.equals("BallChange"))
 						{
 							ballType = (int) v;
@@ -503,12 +553,10 @@ public class GameMachine {
 						} else if (s.equals("BallForce"))
 						{
 							Force = -v;
-							//System.out.println("ball force");
 						} else if (s.equals("BallRoll"))
 						{
 							Roll = -v;
 							gw.releaseBall(Force, Roll);
-							//System.out.println("Ball type: " + ballType + " Force: " + Force + " Roll: " + Roll);
 							stop = true;
 							launching = true;
 							waitingPlayer = false;
@@ -526,8 +574,11 @@ public class GameMachine {
 
 	}
 
+	/**
+	 * O computador faz uma jogada aleatória
+	 * @param gameWindow gameWindow para lançar a bola
+	 */
 	public void computerPlay(GameWindow gameWindow) {
-		// TODO Auto-generated method stub
 		gameWindow.chooseBallType(-1);
 		Random rnd = new Random();
 		int move = rnd.nextInt(30);
@@ -553,9 +604,12 @@ public class GameMachine {
 
 		int numero = -(rnd.nextInt(1000) + 1000);
 		gameWindow.releaseBall(numero, move);
-		//System.out.println("Computador: " + numero);
 	}
 
+	/**
+	 * Manda as pontuações para o respetivo telemóvel
+	 * @param b true se for o jogador 1, false se for o jogador 2
+	 */
 	public void sendPoints(boolean b) {
 		if (b)
 		{

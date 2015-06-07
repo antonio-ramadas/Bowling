@@ -47,7 +47,6 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ArrayMap;
 import com.badlogic.gdx.utils.Disposable;
 
-import connections.Server;
 import elements.Alley;
 import elements.Ball;
 import elements.Pin;
@@ -94,7 +93,6 @@ public class GameWindow  extends ApplicationAdapter {
 					Thread.sleep(100);
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			soundMusic.stop();
@@ -198,46 +196,14 @@ public class GameWindow  extends ApplicationAdapter {
 		try {
 			gameMachine = new GameMachine();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		gameMachine.configSpawnTime(gameMachine.timeToSpawn);
 		startSound();
-		//restartPins();
-
-		/*ImagePontuation p = new ImagePontuation();
-		p.writePlayersName("Manel", "Pedro");
-		p.writeScoreHalfPlay(1, 1, 1, "2");
-		p.writeScoreHalfPlay(1, 1, 2, "/");
-		p.writeScorePlay(1, 1, "3");
-
-		p.writeScoreHalfPlay(1, 2, 1, "X");
-		p.writeScoreHalfPlay(1, 2, 2, "9");
-		p.writeScorePlay(1, 2, "3");
-
-
-		p.writeScoreHalfPlay(2, 1, 1, "2");
-		p.writeScoreHalfPlay(2, 1, 2, "/");
-		p.writeScorePlay(2, 1, "3");
-
-		p.writeScoreHalfPlay(2, 2, 1, "X");
-		p.writeScoreHalfPlay(2, 2, 2, "9");
-		p.writeScorePlay(2, 2, "3");
-
-		p.writeFinalScore(254, 5);
-
-		p.exportImage();
-
-		System.exit(0);*/
-
-		//releaseBall(-550f, 0f);
-		//moveBallLeft();
-		//moveBallRight();
 	}
 
 	private void startSound() {
-		// TODO Auto-generated method stub
 		new MusicThread().start();
 	}
 
@@ -266,7 +232,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	public void moveBallRight() {
-		// TODO Auto-generated method stub
 		if (ballGo.body.getCenterOfMassPosition().z > -35)
 		{
 			ballGo.transform.trn(0f, 0f, -1f);
@@ -275,7 +240,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	public void moveBallLeft() {
-		// TODO Auto-generated method stub
 		if (ballGo.body.getCenterOfMassPosition().z < 35)
 		{
 			ballGo.transform.trn(0f, 0f, 1f);
@@ -284,7 +248,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	public void moveBallRight(float i) {
-		// TODO Auto-generated method stub
 		if (ballGo.body.getCenterOfMassPosition().z - i > -35)
 		{
 			ballGo.transform.trn(0f, 0f, -i);
@@ -293,7 +256,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	public void moveBallLeft(float i) {
-		// TODO Auto-generated method stub
 		if (ballGo.body.getCenterOfMassPosition().z + i < 35)
 		{
 			ballGo.transform.trn(0f, 0f, i);
@@ -302,7 +264,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	public void chooseBallType(int i) {
-		// TODO Auto-generated method stub
 		switch (i)
 		{
 		case 0:
@@ -339,12 +300,10 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void setColor(Color c) {
-		// TODO Auto-generated method stub
 		((ColorAttribute)ballGo.materials.get(0).get(ColorAttribute.Diffuse)).color.set(c);
 	}
 
 	private void setMass(float fl) {
-		// TODO Auto-generated method stub
 		ballGo.body.setMassProps(fl, new Vector3(500f, 500f, 500f));
 	}
 
@@ -356,7 +315,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void buildAlley() {
-		// TODO Auto-generated method stub
 		GameObject object = constructors.get("ground").construct();
 		object.transform.trn(-80f, 10f, 0);
 		object.body.setCollisionFlags(object.body.getCollisionFlags()
@@ -379,7 +337,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void setGravity(float gravity, btDynamicsWorld dynamicsWorld) {
-		// TODO Auto-generated method stub
 		dynamicsWorld.setGravity(new Vector3(0f, gravity, 0));
 	}
 
@@ -409,7 +366,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void elementsInit(Ball bowlingBall,	Pin bowlingPin) {
-		// TODO Auto-generated method stub
 		bowlingAlley = new Alley();
 		bowlingAlley.create();
 
@@ -419,7 +375,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void globalInitialization(float gravity) {
-		// TODO Auto-generated method stub
 		modelBatch = new ModelBatch();
 		environment = new Environment();
 		environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
@@ -453,7 +408,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void pin10set() {
-		// TODO Auto-generated method stub
 		for (int i = 1; i <= 10; i++)
 		{
 			pinGo[i-1] = constructors.get("pin" + i).construct();
@@ -471,7 +425,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void pinGoTrn(int i) {
-		// TODO Auto-generated method stub
 		switch (i)
 		{
 		case 1:
@@ -520,8 +473,6 @@ public class GameWindow  extends ApplicationAdapter {
 			cam.position.set(ballGo.body.getCenterOfMassPosition().x + 300, 100, cam.position.z);
 			cam.update();
 		}
-		//cam.position.set(300, 100, cam.position.z);
-		//cam.update();
 
 		camController.update();
 
@@ -565,14 +516,12 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								//System.out.println("Entrou aqui primeiro");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								//System.out.println("Entrou aqui segundo");
 								arePinsUp();
 								finish();
 							}
@@ -593,14 +542,12 @@ public class GameWindow  extends ApplicationAdapter {
 						{
 							if (temp_play != gameMachine.isPlayer1Turn || gameMachine.restartPins)
 							{
-								//System.out.println("primeiro!!!");
 								gameMachine.newPlay();
 								restartPins();
 								newBallLaunch();
 							}
 							else
 							{
-								//System.out.println("segundo!!!");
 								arePinsUp();
 								finish();
 							}
@@ -629,8 +576,6 @@ public class GameWindow  extends ApplicationAdapter {
 			}
 			else //jogo acabou
 			{
-				//System.out.println("Acabou o jogo!!!!");
-
 				gameMachine.spriteBatch.begin();
 				gameMachine.backgroundSprite.draw(gameMachine.spriteBatch);
 				gameMachine.spriteBatch.end();
@@ -641,7 +586,6 @@ public class GameWindow  extends ApplicationAdapter {
 				}
 			}
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -655,7 +599,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void restartPins() {
-		// TODO Auto-generated method stub
 		newPinsLaunch();
 		for (int i = 1; i <= 10; i++)
 		{
@@ -664,8 +607,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void checkPinsUp() {
-		// TODO Auto-generated method stub
-		int count = 0;
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
@@ -673,16 +614,13 @@ public class GameWindow  extends ApplicationAdapter {
 			{
 				if (pinGo[i-1] != null && pinGo[i-1].body != null && pinGo[i-1].body.getCenterOfMassPosition() != null)
 				{
-					//System.out.println(pinGo[i-1].body.getCenterOfMassPosition().y + " < 10");
 					pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
 
 					if (!pinUp[i-1])
 					{
-						count++;
 						index = instances.indexOf(pinGo[i-1], true);
 						if (index >= 0)
 						{
-							//System.out.println("removeu: " + i);
 							instances.removeIndex(index);
 							dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 							pinGo[i-1].dispose();
@@ -692,15 +630,12 @@ public class GameWindow  extends ApplicationAdapter {
 			}
 		}
 
-		//System.out.println("checkPinsUp = " + count);
 	}
 
 	private void arePinsUp() {
-		// TODO Auto-generated method stub
 		boolean isStrike = false;
 		for (int i = 1; i <= 10; i++)
 		{
-			//System.out.print("encravou");
 			if (pinGo[i-1] != null && pinUp[i-1])
 			{
 				pinUp[i-1] = !(pinGo[i-1].body.getCenterOfMassPosition().y < 10);
@@ -709,7 +644,6 @@ public class GameWindow  extends ApplicationAdapter {
 			{
 				pinUp[i-1] = false;
 			}
-			//System.out.println("     #sqn");
 			isStrike = isStrike || pinUp[i-1];
 		}
 
@@ -727,18 +661,14 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void finish() {
-		// TODO Auto-generated method stub
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
-			//System.out.println("1i = " + i + " <> pinUp = " + pinUp[i-1]);
 			if (!pinUp[i-1])
 			{
-				//System.out.println("2i = " + i);
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
-					//System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
@@ -761,7 +691,6 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void newBallLaunch() {
-		// TODO Auto-generated method stub
 		instances.removeIndex(instances.indexOf(ballGo, true));
 		dynamicsWorld.removeRigidBody(ballGo.body);
 		ballGo.dispose();
@@ -770,22 +699,18 @@ public class GameWindow  extends ApplicationAdapter {
 	}
 
 	private void newPinsLaunch() {
-		// TODO Auto-generated method stub
 		int index;
 		for (int i = 1; i <= 10; i++)
 		{
 			if (pinUp[i-1] != null && pinUp[i-1])
 			{
-				//System.out.print("foi aqui?");
 				index = instances.indexOf(pinGo[i-1], true);
 				if (index >= 0)
 				{
-					//System.out.println("removeu: " + i);
 					instances.removeIndex(index);
 					dynamicsWorld.removeRigidBody(pinGo[i-1].body);
 					pinGo[i-1].dispose();
 				}
-				//System.out.println("      nao");
 			}
 		}
 		pin10set();
